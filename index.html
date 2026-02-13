@@ -1,497 +1,699 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html dir="rtl" lang="he">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌍 משחק אסטרטגיה עולמי</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>סימולטור מלחמות עולמי</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700&display=swap');
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Assistant', sans-serif;
-            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .map-container {
-            cursor: grab;
+            position: relative;
+            background: #1a1a2e;
+            border-radius: 15px;
+            padding: 20px;
+            min-height: 600px;
         }
 
-        .map-container:active {
-            cursor: grabbing;
+        #worldMap {
+            width: 100%;
+            height: 600px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 50%, #90EE90 100%);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            border: 3px solid #444;
         }
 
-        .country-path {
-            transition: all 0.3s ease;
+        .country-marker {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
 
-        .country-path:hover {
-            opacity: 0.9;
-            filter: brightness(1.2);
+        .country-marker:hover {
+            transform: scale(1.2);
+            z-index: 10;
         }
 
-        /* אנימציה לקווי מלחמה */
-        @keyframes dash {
-            to {
-                stroke-dashoffset: 0;
-            }
-        }
-        .war-line {
-            stroke-dasharray: 10;
-            stroke-dashoffset: 20;
-            animation: dash 1s linear infinite;
+        .country-marker.at-war {
+            animation: pulse 1s infinite;
+            border-color: #ff0000;
         }
 
-        /* אנימציה לסרגל התקדמות */
-        @keyframes fill {
-            from {
-                width: 0%;
-            }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
-        .rank-bar {
-            animation: fill 1s ease-out;
+
+        .attack-line {
+            position: absolute;
+            height: 4px;
+            background: linear-gradient(90deg, #ff0000, #ff6600, #ff0000);
+            transform-origin: left center;
+            animation: attackPulse 1s infinite;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        @keyframes attackPulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .section {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .section h3 {
+            margin-bottom: 10px;
+            color: #ffd700;
+            border-bottom: 2px solid #ffd700;
+            padding-bottom: 5px;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        select {
+            background: #fff;
+            color: #333;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        button.attack {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        button.defend {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        button.retreat {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        button.peace {
+            background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        }
+
+        .war-info {
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid #ff6666;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .power-bar {
+            width: 100%;
+            height: 30px;
+            background: #333;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .power-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .power-fill.attacker {
+            background: linear-gradient(90deg, #ff0000, #ff6600);
+            float: right;
+        }
+
+        .power-fill.defender {
+            background: linear-gradient(90deg, #0066ff, #00ccff);
+        }
+
+        .status-text {
+            text-align: center;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .log {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 14px;
+        }
+
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .country-info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+
+        .ai-action {
+            background: rgba(255, 215, 0, 0.2);
+            border: 2px solid #ffd700;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .disabled {
+            opacity: 0.5;
+            cursor: not-allowed !important;
         }
     </style>
 </head>
-<body class="w-full h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white p-4">
-
-    <div class="text-center mb-3">
-        <h1 class="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-            🌍 משחק אסטרטגיה עולמי
-        </h1>
-        <p class="text-sm text-gray-300">גלגל עכבר = זום | גרירה = הזזה | לחיצה על מדינה לבחירה</p>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 h-[calc(100vh-140px)]">
+<body>
+    <div class="container">
+        <h1>🌍 סימולטור מלחמות עולמי 🌍</h1>
         
-        <!-- פאנל ניהול (שמאל) -->
-        <div class="bg-slate-800/50 backdrop-blur rounded-xl p-4 overflow-y-auto border border-white/10">
-            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                🚩 בקרת משחק
-            </h2>
-
-            <div class="bg-slate-700/50 rounded-lg p-3 mb-4">
-                <h3 class="font-semibold mb-2 text-sm">בחירת יעד</h3>
-                <div class="space-y-2 text-xs">
-                    <div id="attacker-display" class="p-2 rounded bg-slate-600 transition-colors">תוקף: לא נבחר</div>
-                    <div id="target-display" class="p-2 rounded bg-slate-600 transition-colors">מטרה: לא נבחר</div>
+        <div class="game-grid">
+            <div class="control-panel">
+                <div class="panel section">
+                    <h3>⚔️ בחר מדינות</h3>
+                    <label>תוקף:</label>
+                    <select id="attackerSelect"></select>
+                    
+                    <label>נתקף:</label>
+                    <select id="defenderSelect"></select>
+                    
+                    <button class="attack" onclick="startWar()">🔥 התחל מלחמה</button>
                 </div>
-                <button id="war-btn" onclick="declareWar()" class="w-full mt-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed p-2 rounded font-semibold flex items-center justify-center gap-2 transition-all">
-                    ⚔️ הכרז מלחמה!
-                </button>
-            </div>
 
-            <div class="bg-slate-700/50 rounded-lg p-3 mb-4">
-                <h3 class="font-semibold mb-2 text-sm">מהירות והגדרות</h3>
-                <div class="flex gap-2 mb-2">
-                    <button onclick="setSpeed(0.5)" class="speed-btn flex-1 p-1 bg-slate-600 rounded text-xs hover:bg-slate-500" data-speed="0.5">0.5x</button>
-                    <button onclick="setSpeed(1)" class="speed-btn flex-1 p-1 bg-blue-600 rounded text-xs hover:bg-blue-500" data-speed="1">1x</button>
-                    <button onclick="setSpeed(2)" class="speed-btn flex-1 p-1 bg-slate-600 rounded text-xs hover:bg-slate-500" data-speed="2">2x</button>
+                <div class="panel section" id="warControls" style="display: none;">
+                    <h3>🎮 פקודות קרב</h3>
+                    <button class="attack" onclick="performAction('attack')">⚔️ התקף</button>
+                    <button class="defend" onclick="performAction('defend')">🛡️ הגן</button>
+                    <button class="retreat" onclick="performAction('retreat')">🏃 נסוג</button>
+                    
+                    <div class="war-info" id="warStatus"></div>
                 </div>
-                <div class="flex gap-2">
-                    <button id="pause-btn" onclick="togglePause()" class="flex-1 bg-yellow-600 hover:bg-yellow-700 p-2 rounded flex items-center justify-center gap-2 text-xs">
-                        <span id="pause-text">⏸️ השהה</span>
-                    </button>
-                    <button onclick="resetGame()" class="flex-1 bg-purple-600 hover:bg-purple-700 p-2 rounded flex items-center justify-center gap-2 text-xs">
-                        🔄 איפוס
-                    </button>
+
+                <div class="panel section">
+                    <h3>🕊️ דיפלומטיה</h3>
+                    <button class="peace" onclick="proposePeace()">☮️ הצע שלום</button>
+                    <button class="peace" onclick="surrender()">🏳️ כניעה</button>
+                    
+                    <div class="ai-action" id="aiActions" style="display: none;"></div>
+                </div>
+
+                <div class="panel section">
+                    <h3>📊 מידע על מדינה</h3>
+                    <div class="country-info" id="countryInfo">
+                        בחר מדינה במפה לראות מידע
+                    </div>
                 </div>
             </div>
 
-            <!-- מלחמות פעילות -->
-            <div id="active-wars-container" class="hidden bg-slate-700/50 rounded-lg p-3 mb-4">
-                <h3 class="font-semibold mb-2 text-sm flex items-center gap-2 text-red-400">
-                    ⚔️ מלחמות פעילות
-                </h3>
-                <div id="wars-list" class="space-y-3"></div>
-            </div>
+            <div class="panel">
+                <div class="map-container">
+                    <h3 style="margin-bottom: 15px;">🗺️ מפת העולם</h3>
+                    <div id="worldMap"></div>
+                </div>
 
-            <div class="bg-slate-700/50 rounded-lg p-3">
-                <h3 class="font-semibold mb-2 text-sm">📜 יומן אירועים</h3>
-                <div id="event-log" class="space-y-1 text-[10px] max-h-40 overflow-y-auto"></div>
+                <div class="section" style="margin-top: 20px;">
+                    <h3>📜 יומן אירועים</h3>
+                    <div class="log" id="eventLog"></div>
+                </div>
             </div>
-        </div>
-
-        <!-- מפה מרכזית (אמצע) - עכשיו גדולה יותר -->
-        <div class="lg:col-span-3 bg-slate-800/30 backdrop-blur rounded-xl p-2 relative overflow-hidden border border-white/5">
-            <div class="absolute bottom-4 left-4 flex gap-2 z-10">
-                <button onclick="adjustZoom(1.2)" class="bg-blue-600 hover:bg-blue-700 p-2 rounded-lg text-xl">🔍+</button>
-                <button onclick="adjustZoom(0.8)" class="bg-blue-600 hover:bg-blue-700 p-2 rounded-lg text-xl">🔍-</button>
-                <div id="zoom-display" class="bg-black/50 backdrop-blur px-3 py-2 rounded-lg text-xs flex items-center">זום: 1.0x</div>
-            </div>
-
-            <div id="map-viewport" class="w-full h-full overflow-hidden map-container">
-                <svg id="world-svg" width="1400" height="800" viewBox="0 0 1400 800" class="w-full h-full transition-transform duration-100 ease-out origin-center">
-                    <rect width="1400" height="800" fill="#0a192f" />
-                    <g id="war-lines-group"></g>
-                    <g id="countries-group"></g>
-                </svg>
-            </div>
-        </div>
-
-        <!-- דירוג (ימין) - עם סרגלי התקדמות -->
-        <div class="bg-slate-800/50 backdrop-blur rounded-xl p-4 overflow-y-auto border border-white/10">
-            <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
-                🏆 דירוג עולמי
-            </h2>
-            <div class="text-xs text-gray-400 mb-3">מבוסס על שטח וכוח</div>
-            <div id="leaderboard" class="space-y-3"></div>
         </div>
     </div>
+
+    <div class="tooltip" id="tooltip"></div>
 
     <script>
-        // --- נתונים וקבועים (מפה גדולה יותר) ---
-        const INITIAL_COUNTRIES = {
-            'ארה"ב': { strength: 100, territory: 100, color: '#3498db', path: 'M200,280 L165,250 L150,265 L135,280 L128,308 L135,350 L150,378 L180,392 L220,399 L265,392 L295,378 L322,350 L336,322 L343,294 L336,266 L308,252 L265,259 L238,266 Z' },
-            'קנדה': { strength: 55, territory: 85, color: '#7d3c98', path: 'M135,112 L128,140 L135,168 L150,196 L180,217 L220,231 L265,238 L308,231 L336,217 L357,196 L371,168 L375,140 L371,119 L350,105 L308,98 L252,101 L196,105 Z' },
-            'מקסיקו': { strength: 35, territory: 45, color: '#138d75', path: 'M165,406 L150,413 L143,427 L147,448 L161,469 L182,483 L210,487 L238,483 L259,469 L266,448 L263,427 L252,413 L224,409 Z' },
-            'ברזיל': { strength: 60, territory: 75, color: '#27ae60', path: 'M336,504 L322,518 L315,539 L319,567 L336,595 L364,616 L399,630 L434,627 L455,609 L465,581 L462,546 L448,518 L420,507 L385,504 Z' },
-            'ארגנטינה': { strength: 35, territory: 50, color: '#5dade2', path: 'M350,644 L343,665 L347,693 L361,721 L385,735 L409,732 L427,714 L431,686 L423,661 L403,648 Z' },
-            'בריטניה': { strength: 65, territory: 30, color: '#e67e22', path: 'M602,189 L595,196 L592,207 L596,221 L606,231 L620,234 L633,230 L641,218 L641,203 L634,193 L623,189 Z' },
-            'צרפת': { strength: 65, territory: 35, color: '#1abc9c', path: 'M609,245 L602,255 L605,273 L616,291 L637,301 L661,300 L679,290 L683,273 L679,256 L665,246 L641,244 Z' },
-            'גרמניה': { strength: 70, territory: 35, color: '#34495e', path: 'M655,224 L648,235 L651,249 L662,263 L682,269 L703,266 L714,255 L714,238 L707,227 L689,222 Z' },
-            'ספרד': { strength: 50, territory: 32, color: '#e74c3c', path: 'M588,280 L581,294 L585,315 L602,333 L627,339 L655,336 L675,322 L679,305 L672,291 L651,284 Z' },
-            'איטליה': { strength: 55, territory: 28, color: '#16a085', path: 'M665,294 L658,308 L658,322 L665,343 L679,357 L693,357 L707,343 L710,322 L707,308 L693,298 Z' },
-            'ישראל': { strength: 60, territory: 18, color: '#3498db', path: 'M728,371 L725,378 L728,389 L737,396 L746,393 L750,384 L747,375 Z' },
-            'רוסיה': { strength: 90, territory: 120, color: '#9b59b6', path: 'M756,105 L742,126 L749,154 L763,182 L784,203 L812,217 L854,231 L910,238 L966,235 L1008,224 L1036,203 L1050,175 L1047,140 L1036,115 L1008,98 L952,91 L882,95 L812,101 Z' },
-            'סין': { strength: 95, territory: 100, color: '#e74c3c', path: 'M910,266 L903,294 L910,329 L931,364 L959,392 L1001,413 L1043,420 L1078,406 L1099,378 L1106,343 L1103,308 L1092,280 L1064,266 L1022,263 L980,269 Z' },
-            'יפן': { strength: 75, territory: 35, color: '#e8daef', path: 'M1120,280 L1113,291 L1113,308 L1120,322 L1134,329 L1148,326 L1155,315 L1155,298 L1148,287 Z' },
-            'הודו': { strength: 80, territory: 75, color: '#f39c12', path: 'M868,399 L861,420 L865,448 L882,483 L910,511 L945,518 L973,504 L987,476 L987,441 L973,413 L945,403 Z' },
-            'דרום אפריקה': { strength: 45, territory: 55, color: '#85929e', path: 'M700,588 L693,609 L696,637 L710,665 L735,686 L770,693 L798,686 L812,665 L812,637 L805,609 L784,595 Z' },
-            'אוסטרליה': { strength: 50, territory: 70, color: '#117864', path: 'M1022,574 L1015,602 L1022,637 L1050,669 L1092,689 L1141,693 L1183,679 L1204,651 L1207,616 L1197,588 L1169,577 Z' },
-            'מצרים': { strength: 40, territory: 40, color: '#d4ac0d', path: 'M700,350 L693,364 L693,385 L700,399 L714,406 L728,403 L735,392 L735,371 L728,357 Z' },
-            'ערב הסעודית': { strength: 50, territory: 65, color: '#145a32', path: 'M742,371 L735,392 L742,420 L763,441 L791,448 L819,441 L833,420 L833,392 L826,371 Z' }
+        // נתוני מדינות עם דירוג כוח (1-100)
+        const countries = {
+            'ארה"ב': { power: 100, flag: '🇺🇸', x: 15, y: 35, color: '#1e40af' },
+            'סין': { power: 95, flag: '🇨🇳', x: 75, y: 40, color: '#dc2626' },
+            'רוסיה': { power: 90, flag: '🇷🇺', x: 60, y: 25, color: '#16a34a' },
+            'הודו': { power: 75, flag: '🇮🇳', x: 70, y: 50, color: '#ea580c' },
+            'בריטניה': { power: 70, flag: '🇬🇧', x: 45, y: 28, color: '#7c3aed' },
+            'צרפת': { power: 68, flag: '🇫🇷', x: 47, y: 32, color: '#0891b2' },
+            'גרמניה': { power: 67, flag: '🇩🇪', x: 50, y: 30, color: '#4338ca' },
+            'יפן': { power: 65, flag: '🇯🇵', x: 85, y: 38, color: '#be123c' },
+            'דרום קוריאה': { power: 60, flag: '🇰🇷', x: 82, y: 42, color: '#059669' },
+            'איטליה': { power: 55, flag: '🇮🇹', x: 50, y: 36, color: '#0284c7' },
+            'טורקיה': { power: 53, flag: '🇹🇷', x: 55, y: 38, color: '#dc2626' },
+            'ברזיל': { power: 50, flag: '🇧🇷', x: 30, y: 65, color: '#16a34a' },
+            'ישראל': { power: 48, flag: '🇮🇱', x: 54, y: 45, color: '#2563eb' },
+            'איראן': { power: 45, flag: '🇮🇷', x: 62, y: 43, color: '#15803d' },
+            'מצרים': { power: 42, flag: '🇪🇬', x: 53, y: 48, color: '#b91c1c' },
+            'ספרד': { power: 40, flag: '🇪🇸', x: 44, y: 38, color: '#eab308' },
+            'אוסטרליה': { power: 38, flag: '🇦🇺', x: 82, y: 75, color: '#0891b2' },
+            'קנדה': { power: 36, flag: '🇨🇦', x: 18, y: 22, color: '#dc2626' },
+            'ערב הסעודית': { power: 35, flag: '🇸🇦', x: 58, y: 48, color: '#16a34a' },
+            'מקסיקו': { power: 32, flag: '🇲🇽', x: 12, y: 48, color: '#15803d' },
+            'ארגנטינה': { power: 30, flag: '🇦🇷', x: 28, y: 78, color: '#0891b2' },
+            'דרום אפריקה': { power: 28, flag: '🇿🇦', x: 52, y: 75, color: '#eab308' },
+            'אינדונזיה': { power: 25, flag: '🇮🇩', x: 78, y: 62, color: '#dc2626' },
+            'פקיסטן': { power: 23, flag: '🇵🇰', x: 68, y: 45, color: '#16a34a' }
         };
 
-        let countries = JSON.parse(JSON.stringify(INITIAL_COUNTRIES));
-        let selectedCountry = null;
-        let targetCountry = null;
-        let activeWars = [];
-        let gameSpeed = 1;
-        let isPaused = false;
-        let zoom = 1;
-        let pan = { x: 0, y: 0 };
-        let isPanning = false;
-        let startPan = { x: 0, y: 0 };
+        let currentWar = null;
+        let attackLines = [];
+        let warTurns = 0;
 
-        // --- אתחול ---
-        window.onload = () => {
+        function init() {
+            populateSelects();
             renderMap();
-            updateLeaderboard();
-            addLog("🎮 המשחק מוכן. בחר מדינה כדי להתחיל!");
-            
-            // לולאת משחק
-            setInterval(gameLoop, 1000);
-        };
+            addLog('המשחק מוכן! בחר מדינות כדי להתחיל מלחמה');
+        }
 
-        // --- ניהול מפה ולחיצות ---
+        function populateSelects() {
+            const attackerSelect = document.getElementById('attackerSelect');
+            const defenderSelect = document.getElementById('defenderSelect');
+            
+            Object.keys(countries).sort().forEach(country => {
+                const option1 = new Option(`${countries[country].flag} ${country} (כוח: ${countries[country].power})`, country);
+                const option2 = new Option(`${countries[country].flag} ${country} (כוח: ${countries[country].power})`, country);
+                attackerSelect.add(option1);
+                defenderSelect.add(option2);
+            });
+        }
+
         function renderMap() {
-            const group = document.getElementById('countries-group');
-            group.innerHTML = '';
-            
+            const map = document.getElementById('worldMap');
+            map.innerHTML = '';
+
             Object.entries(countries).forEach(([name, data]) => {
-                const center = getCountryCenter(data.path);
-                const isSelected = name === selectedCountry;
-                const isTarget = name === targetCountry;
-                const isInWar = activeWars.some(w => w.attacker === name || w.defender === name);
+                const marker = document.createElement('div');
+                marker.className = 'country-marker';
+                marker.style.left = `${data.x}%`;
+                marker.style.top = `${data.y}%`;
+                marker.style.background = data.color;
+                marker.innerHTML = data.flag;
+                marker.title = name;
                 
-                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                g.setAttribute('class', 'country-group');
-                g.onclick = () => selectCountry(name);
+                marker.addEventListener('click', () => showCountryInfo(name));
+                marker.addEventListener('mouseenter', (e) => showTooltip(e, name));
+                marker.addEventListener('mouseleave', hideTooltip);
 
-                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path.setAttribute('d', data.path);
-                path.setAttribute('fill', data.color);
-                path.setAttribute('stroke', isSelected ? '#fbbf24' : (isTarget ? '#ef4444' : (isInWar ? '#f59e0b' : 'white')));
-                path.setAttribute('stroke-width', isSelected || isTarget ? '4' : '2');
-                path.setAttribute('opacity', data.territory <= 5 ? '0.2' : '0.7');
-                path.setAttribute('class', 'country-path');
-                
-                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                text.setAttribute('x', center.x);
-                text.setAttribute('y', center.y);
-                text.setAttribute('text-anchor', 'middle');
-                text.setAttribute('fill', 'white');
-                text.setAttribute('font-size', '12');
-                text.setAttribute('font-weight', 'bold');
-                text.setAttribute('style', 'pointer-events: none; text-shadow: 2px 2px 4px black;');
-                text.textContent = `${name}`;
+                if (currentWar && (currentWar.attacker === name || currentWar.defender === name)) {
+                    marker.classList.add('at-war');
+                }
 
-                const stats = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                stats.setAttribute('x', center.x);
-                stats.setAttribute('y', center.y + 16);
-                stats.setAttribute('text-anchor', 'middle');
-                stats.setAttribute('fill', '#cbd5e1');
-                stats.setAttribute('font-size', '10');
-                stats.setAttribute('style', 'pointer-events: none; text-shadow: 1px 1px 2px black;');
-                stats.textContent = `💪${data.strength}`;
-
-                g.appendChild(path);
-                g.appendChild(text);
-                g.appendChild(stats);
-                group.appendChild(g);
+                map.appendChild(marker);
             });
-            renderWarLines();
+
+            renderAttackLines();
         }
 
-        function renderWarLines() {
-            const group = document.getElementById('war-lines-group');
-            group.innerHTML = '';
-            activeWars.forEach(war => {
-                const c1 = getCountryCenter(countries[war.attacker].path);
-                const c2 = getCountryCenter(countries[war.defender].path);
-                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                line.setAttribute('x1', c1.x); line.setAttribute('y1', c1.y);
-                line.setAttribute('x2', c2.x); line.setAttribute('y2', c2.y);
-                line.setAttribute('stroke', '#ef4444');
-                line.setAttribute('stroke-width', '3');
-                line.setAttribute('class', 'war-line');
-                group.appendChild(line);
-            });
-        }
+        function renderAttackLines() {
+            const map = document.getElementById('worldMap');
+            attackLines.forEach(line => line.remove());
+            attackLines = [];
 
-        // --- לוגיקת משחק ---
-        function selectCountry(name) {
-            if (!selectedCountry || (selectedCountry && targetCountry)) {
-                selectedCountry = name;
-                targetCountry = null;
-                addLog(`✅ נבחרה מדינה תוקפת: ${name}`);
-            } else if (selectedCountry === name) {
-                selectedCountry = null;
-            } else {
-                targetCountry = name;
-                addLog(`🎯 נבחר יעד לכיבוש: ${name}`);
+            if (currentWar) {
+                const attacker = countries[currentWar.attacker];
+                const defender = countries[currentWar.defender];
+                
+                const line = document.createElement('div');
+                line.className = 'attack-line';
+                
+                const dx = defender.x - attacker.x;
+                const dy = defender.y - attacker.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                
+                line.style.left = `${attacker.x}%`;
+                line.style.top = `${attacker.y}%`;
+                line.style.width = `${distance}%`;
+                line.style.transform = `rotate(${angle}deg)`;
+                
+                map.appendChild(line);
+                attackLines.push(line);
             }
-            updateSelectionUI();
-            renderMap();
         }
 
-        function updateSelectionUI() {
-            const atkDisp = document.getElementById('attacker-display');
-            const tgtDisp = document.getElementById('target-display');
-            atkDisp.textContent = `תוקף: ${selectedCountry || 'לא נבחר'}`;
-            atkDisp.className = `p-2 rounded transition-colors ${selectedCountry ? 'bg-blue-600' : 'bg-slate-600'}`;
-            tgtDisp.textContent = `מטרה: ${targetCountry || 'לא נבחר'}`;
-            tgtDisp.className = `p-2 rounded transition-colors ${targetCountry ? 'bg-red-600' : 'bg-slate-600'}`;
+        function showTooltip(e, country) {
+            const tooltip = document.getElementById('tooltip');
+            const data = countries[country];
+            tooltip.innerHTML = `<strong>${data.flag} ${country}</strong><br>כוח: ${data.power}/100`;
+            tooltip.style.display = 'block';
+            tooltip.style.left = e.pageX + 10 + 'px';
+            tooltip.style.top = e.pageY + 10 + 'px';
         }
 
-        function declareWar() {
-            if (!selectedCountry || !targetCountry) return;
-            const exists = activeWars.find(w => 
-                (w.attacker === selectedCountry && w.defender === targetCountry) ||
-                (w.attacker === targetCountry && w.defender === selectedCountry)
-            );
-            if (exists) {
-                addLog("⚠️ כבר קיימת מלחמה בין המדינות!");
+        function hideTooltip() {
+            document.getElementById('tooltip').style.display = 'none';
+        }
+
+        function showCountryInfo(country) {
+            const data = countries[country];
+            const info = document.getElementById('countryInfo');
+            
+            let status = 'שלווה';
+            if (currentWar) {
+                if (currentWar.attacker === country) status = 'תוקף';
+                else if (currentWar.defender === country) status = 'מותקף';
+            }
+            
+            info.innerHTML = `
+                <div style="font-size: 24px; margin-bottom: 10px;">${data.flag}</div>
+                <strong>${country}</strong><br>
+                <strong>כוח צבאי:</strong> ${data.power}/100<br>
+                <strong>סטטוס:</strong> ${status}
+            `;
+        }
+
+        function startWar() {
+            const attacker = document.getElementById('attackerSelect').value;
+            const defender = document.getElementById('defenderSelect').value;
+
+            if (attacker === defender) {
+                alert('מדינה לא יכולה לתקוף את עצמה!');
                 return;
             }
 
-            activeWars.push({
-                id: Date.now(),
-                attacker: selectedCountry,
-                defender: targetCountry,
-                progress: 50
-            });
-            addLog(`⚔️ מלחמה פרצה! ${selectedCountry} תוקפת את ${targetCountry}`);
-            document.getElementById('active-wars-container').classList.remove('hidden');
-            renderMap();
-            updateWarsUI();
-        }
+            const attackerPower = countries[attacker].power;
+            const defenderPower = countries[defender].power;
 
-        function gameLoop() {
-            if (isPaused) return;
+            currentWar = {
+                attacker: attacker,
+                defender: defender,
+                attackerStrength: attackerPower,
+                defenderStrength: defenderPower,
+                attackerMorale: 100,
+                defenderMorale: 100
+            };
 
-            activeWars = activeWars.filter(war => {
-                const atk = countries[war.attacker];
-                const def = countries[war.defender];
-                
-                // חישוב יחסי כוחות
-                const ratio = atk.strength / def.strength;
-                const change = (ratio - 1) * 2 * gameSpeed;
-                war.progress += change + (Math.random() * 2 - 1);
+            warTurns = 0;
 
-                if (war.progress >= 100) {
-                    const gain = Math.floor(def.territory * 0.3);
-                    atk.territory += gain;
-                    atk.strength += 5;
-                    def.territory -= gain;
-                    def.strength = Math.max(10, def.strength - 10);
-                    addLog(`🏆 ניצחון! ${war.attacker} כבשה שטחים מ-${war.defender}`);
-                    return false;
-                } else if (war.progress <= 0) {
-                    addLog(`🛡️ הדיפה! ${war.defender} הצליחה לבלום את ${war.attacker}`);
-                    return false;
-                }
-                return true;
-            });
-
-            if (activeWars.length === 0) {
-                document.getElementById('active-wars-container').classList.add('hidden');
+            // אם מדינה חלשה תוקפת חזקה, תגובה אוטומטית
+            if (attackerPower < defenderPower * 0.5) {
+                addLog(`⚠️ ${defender} כועס על ההתקפה הלא הגיונית ומתכונן למתקפת נגד הרסנית!`);
+                showAIAction(`${defender} מזהה את החולשה ומכין תגובה מלחמתית חזקה`);
             }
 
+            document.getElementById('warControls').style.display = 'block';
+            updateWarStatus();
             renderMap();
-            updateWarsUI();
-            updateLeaderboard();
+            addLog(`🔥 מלחמה החלה! ${attacker} תוקף את ${defender}`);
         }
 
-        function updateWarsUI() {
-            const list = document.getElementById('wars-list');
-            list.innerHTML = '';
-            activeWars.forEach(war => {
-                const div = document.createElement('div');
-                div.className = "bg-slate-800 rounded p-2 text-xs border border-white/5";
-                div.innerHTML = `
-                    <div class="flex justify-between mb-1">
-                        <span>${war.attacker}</span>
-                        <span>⚔️</span>
-                        <span>${war.defender}</span>
-                    </div>
-                    <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
-                        <div class="bg-gradient-to-r from-blue-500 to-red-500 h-full transition-all" style="width: ${war.progress}%"></div>
-                    </div>
-                    <div class="flex gap-1 mt-2">
-                        <button onclick="boostWar('${war.id}', 5)" class="flex-1 bg-red-900 hover:bg-red-800 rounded py-1">התקף</button>
-                        <button onclick="boostWar('${war.id}', -5)" class="flex-1 bg-blue-900 hover:bg-blue-800 rounded py-1">הגן</button>
-                    </div>
-                `;
-                list.appendChild(div);
-            });
+        function performAction(action) {
+            if (!currentWar) return;
+
+            warTurns++;
+            const attacker = currentWar.attacker;
+            const defender = currentWar.defender;
+            const powerRatio = currentWar.attackerStrength / currentWar.defenderStrength;
+
+            let damage = 0;
+            let counterDamage = 0;
+
+            switch(action) {
+                case 'attack':
+                    damage = 5 + Math.random() * 10 * powerRatio;
+                    counterDamage = 3 + Math.random() * 8 * (1/powerRatio);
+                    currentWar.defenderStrength -= damage;
+                    currentWar.attackerStrength -= counterDamage;
+                    addLog(`⚔️ ${attacker} תוקף! נגרם ${damage.toFixed(1)} נזק ל${defender}, וספג ${counterDamage.toFixed(1)} נזק בתגובה`);
+                    break;
+
+                case 'defend':
+                    counterDamage = 2 + Math.random() * 5 * (1/powerRatio);
+                    currentWar.attackerStrength -= counterDamage;
+                    currentWar.defenderMorale += 5;
+                    addLog(`🛡️ ${attacker} מתמקד בהגנה. ${defender} מנצל ותוקף, נגרם ${counterDamage.toFixed(1)} נזק`);
+                    break;
+
+                case 'retreat':
+                    damage = 8 + Math.random() * 12 * (1/powerRatio);
+                    currentWar.attackerStrength -= damage;
+                    currentWar.attackerMorale -= 15;
+                    addLog(`🏃 ${attacker} נסוג! ${defender} רודף ותוקף, נגרם ${damage.toFixed(1)} נזק חמור`);
+                    break;
+            }
+
+            // AI מגיב
+            aiResponse();
+            checkWarEnd();
+            updateWarStatus();
         }
 
-        function boostWar(id, amt) {
-            const war = activeWars.find(w => w.id == id);
-            if (war) {
-                war.progress = Math.min(100, Math.max(0, war.progress + amt));
-                updateWarsUI();
+        function aiResponse() {
+            const powerRatio = currentWar.defenderStrength / currentWar.attackerStrength;
+            const aiActions = ['defend', 'attack', 'counterAttack'];
+            
+            let aiChoice;
+            if (powerRatio > 1.5) {
+                aiChoice = 'counterAttack';
+            } else if (powerRatio < 0.7) {
+                aiChoice = 'defend';
+            } else {
+                aiChoice = aiActions[Math.floor(Math.random() * aiActions.length)];
+            }
+
+            let message = '';
+            switch(aiChoice) {
+                case 'counterAttack':
+                    const damage = 7 + Math.random() * 12 * powerRatio;
+                    currentWar.attackerStrength -= damage;
+                    message = `${currentWar.defender} מבצע מתקפת נגד עוצמתית! נגרם ${damage.toFixed(1)} נזק`;
+                    break;
+                case 'defend':
+                    currentWar.defenderMorale += 3;
+                    message = `${currentWar.defender} מתבצר ומחזק הגנות`;
+                    break;
+                case 'attack':
+                    const atkDamage = 5 + Math.random() * 8 * powerRatio;
+                    currentWar.attackerStrength -= atkDamage;
+                    message = `${currentWar.defender} תוקף בחזרה! נגרם ${atkDamage.toFixed(1)} נזק`;
+                    break;
+            }
+
+            showAIAction(message);
+            addLog(`🤖 ${message}`);
+        }
+
+        function showAIAction(message) {
+            const aiDiv = document.getElementById('aiActions');
+            aiDiv.innerHTML = `<strong>פעולת AI:</strong><br>${message}`;
+            aiDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                aiDiv.style.display = 'none';
+            }, 4000);
+        }
+
+        function updateWarStatus() {
+            if (!currentWar) return;
+
+            const status = document.getElementById('warStatus');
+            const attackerPercent = Math.max(0, (currentWar.attackerStrength / countries[currentWar.attacker].power * 100));
+            const defenderPercent = Math.max(0, (currentWar.defenderStrength / countries[currentWar.defender].power * 100));
+
+            const total = attackerPercent + defenderPercent;
+            const attackerWidth = (attackerPercent / total * 100).toFixed(1);
+            const defenderWidth = (defenderPercent / total * 100).toFixed(1);
+
+            status.innerHTML = `
+                <strong>סיבוב ${warTurns}</strong><br>
+                <div style="margin: 10px 0;">
+                    <div>${countries[currentWar.attacker].flag} ${currentWar.attacker}</div>
+                    <div class="power-bar">
+                        <div class="power-fill attacker" style="width: ${attackerWidth}%">
+                            ${attackerPercent.toFixed(0)}%
+                        </div>
+                    </div>
+                </div>
+                <div style="margin: 10px 0;">
+                    <div>${countries[currentWar.defender].flag} ${currentWar.defender}</div>
+                    <div class="power-bar">
+                        <div class="power-fill defender" style="width: ${defenderWidth}%">
+                            ${defenderPercent.toFixed(0)}%
+                        </div>
+                    </div>
+                </div>
+                <div class="status-text">
+                    ${attackerPercent > defenderPercent ? 
+                        `${currentWar.attacker} מוביל! 📈` : 
+                        `${currentWar.defender} מוביל! 📈`}
+                </div>
+            `;
+        }
+
+        function checkWarEnd() {
+            if (!currentWar) return;
+
+            if (currentWar.attackerStrength <= 0 || currentWar.attackerMorale <= 0) {
+                endWar(currentWar.defender);
+            } else if (currentWar.defenderStrength <= 0 || currentWar.defenderMorale <= 0) {
+                endWar(currentWar.attacker);
             }
         }
 
-        // --- עזרים וממשק ---
-        function updateLeaderboard() {
-            const board = document.getElementById('leaderboard');
-            // חישוב ציון משולב: שטח + כוח
-            const sorted = Object.entries(countries)
-                .map(([name, data]) => ({
-                    name,
-                    ...data,
-                    score: data.territory + (data.strength * 0.5)
-                }))
-                .sort((a, b) => b.score - a.score);
+        function endWar(winner) {
+            const loser = winner === currentWar.attacker ? currentWar.defender : currentWar.attacker;
+            addLog(`🏆 ${winner} ניצח במלחמה נגד ${loser} לאחר ${warTurns} סיבובים!`);
+            alert(`🏆 ${winner} ניצח במלחמה!\n\nהמלחמה נמשכה ${warTurns} סיבובים`);
             
-            const maxScore = sorted[0].score;
-            board.innerHTML = '';
-            
-            sorted.forEach((country, i) => {
-                const div = document.createElement('div');
-                const percentage = (country.score / maxScore) * 100;
-                const medalEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
-                
-                div.className = `rounded-lg overflow-hidden ${i === 0 ? 'ring-2 ring-yellow-500' : ''}`;
-                div.innerHTML = `
-                    <div class="bg-slate-700/50 p-2">
-                        <div class="flex justify-between items-center mb-1">
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-xs w-6">${medalEmoji || (i+1)+'.'}</span>
-                                <span class="text-xs font-semibold">${country.name}</span>
-                            </div>
-                            <div class="text-xs font-bold text-yellow-400">${Math.round(country.score)}</div>
-                        </div>
-                        <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden mb-1">
-                            <div class="rank-bar h-full rounded-full transition-all duration-300 ${
-                                i === 0 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
-                                i === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
-                                i === 2 ? 'bg-gradient-to-r from-amber-600 to-amber-700' :
-                                'bg-gradient-to-r from-blue-500 to-blue-600'
-                            }" style="width: ${percentage}%"></div>
-                        </div>
-                        <div class="flex justify-between text-[10px] text-gray-400">
-                            <span>💪 ${country.strength}</span>
-                            <span>🏛️ ${country.territory}</span>
-                        </div>
-                    </div>
-                `;
-                board.appendChild(div);
-            });
+            currentWar = null;
+            document.getElementById('warControls').style.display = 'none';
+            renderMap();
         }
 
-        function addLog(msg) {
-            const log = document.getElementById('event-log');
+        function proposePeace() {
+            if (!currentWar) {
+                alert('אין מלחמה פעילה');
+                return;
+            }
+
+            const powerRatio = currentWar.defenderStrength / currentWar.attackerStrength;
+            const acceptChance = powerRatio > 1.2 ? 0.7 : (powerRatio < 0.8 ? 0.3 : 0.5);
+
+            if (Math.random() < acceptChance) {
+                addLog(`🕊️ ${currentWar.defender} מקבל את הצעת השלום!`);
+                alert('הצעת השלום התקבלה! המלחמה הסתיימה');
+                currentWar = null;
+                document.getElementById('warControls').style.display = 'none';
+                renderMap();
+            } else {
+                addLog(`❌ ${currentWar.defender} דוחה את הצעת השלום וממשיך להילחם!`);
+                showAIAction(`${currentWar.defender} דוחה שלום ותוקף בזעם!`);
+                const damage = 10 + Math.random() * 15;
+                currentWar.attackerStrength -= damage;
+                updateWarStatus();
+            }
+        }
+
+        function surrender() {
+            if (!currentWar) {
+                alert('אין מלחמה פעילה');
+                return;
+            }
+
+            if (confirm(`האם אתה בטוח שאתה רוצה להיכנע בשם ${currentWar.attacker}?`)) {
+                addLog(`🏳️ ${currentWar.attacker} נכנע ל${currentWar.defender}!`);
+                alert(`${currentWar.attacker} נכנע. ${currentWar.defender} ניצח!`);
+                currentWar = null;
+                document.getElementById('warControls').style.display = 'none';
+                renderMap();
+            }
+        }
+
+        function addLog(message) {
+            const log = document.getElementById('eventLog');
             const entry = document.createElement('div');
-            entry.className = "p-1 border-b border-white/5 last:border-0";
-            const time = new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-            entry.textContent = `[${time}] ${msg}`;
-            log.prepend(entry);
+            entry.className = 'log-entry';
+            const time = new Date().toLocaleTimeString('he-IL');
+            entry.innerHTML = `<strong>[${time}]</strong> ${message}`;
+            log.insertBefore(entry, log.firstChild);
         }
 
-        function getCountryCenter(path) {
-            const coords = path.match(/[\d.]+/g).map(Number);
-            let xSum = 0, ySum = 0, count = 0;
-            for (let i = 0; i < coords.length; i += 2) {
-                xSum += coords[i]; ySum += coords[i+1]; count++;
-            }
-            return { x: xSum / count, y: ySum / count };
-        }
-
-        function adjustZoom(factor) {
-            zoom = Math.max(0.5, Math.min(5, zoom * factor));
-            updateMapTransform();
-        }
-
-        function setSpeed(s) {
-            gameSpeed = s;
-            document.querySelectorAll('.speed-btn').forEach(b => {
-                b.classList.remove('bg-blue-600');
-                b.classList.add('bg-slate-600');
-                if (parseFloat(b.dataset.speed) === s) b.classList.replace('bg-slate-600', 'bg-blue-600');
-            });
-        }
-
-        function togglePause() {
-            isPaused = !isPaused;
-            document.getElementById('pause-text').textContent = isPaused ? '▶️ המשך' : '⏸️ השהה';
-        }
-
-        function resetGame() {
-            countries = JSON.parse(JSON.stringify(INITIAL_COUNTRIES));
-            activeWars = [];
-            selectedCountry = null;
-            targetCountry = null;
-            addLog("🔄 המשחק אופס למצב התחלתי.");
-            renderMap();
-            updateLeaderboard();
-            updateSelectionUI();
-        }
-
-        // --- שליטה בתנועת מפה (Pan & Zoom) ---
-        const viewport = document.getElementById('map-viewport');
-        const svg = document.getElementById('world-svg');
-
-        viewport.addEventListener('mousedown', e => {
-            isPanning = true;
-            startPan = { x: e.clientX - pan.x, y: e.clientY - pan.y };
-        });
-
-        window.addEventListener('mousemove', e => {
-            if (!isPanning) return;
-            pan.x = e.clientX - startPan.x;
-            pan.y = e.clientY - startPan.y;
-            updateMapTransform();
-        });
-
-        window.addEventListener('mouseup', () => isPanning = false);
-
-        viewport.addEventListener('wheel', e => {
-            e.preventDefault();
-            const delta = e.deltaY > 0 ? 0.9 : 1.1;
-            zoom = Math.max(0.5, Math.min(5, zoom * delta));
-            updateMapTransform();
-        }, { passive: false });
-
-        function updateMapTransform() {
-            svg.style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`;
-            document.getElementById('zoom-display').textContent = `זום: ${zoom.toFixed(1)}x`;
-        }
+        // Initialize game
+        init();
     </script>
 </body>
 </html>
