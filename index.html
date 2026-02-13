@@ -6,8 +6,6 @@
     <title>🌍 משחק אסטרטגיה עולמי</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700&display=swap');
         
@@ -44,6 +42,16 @@
             stroke-dashoffset: 20;
             animation: dash 1s linear infinite;
         }
+
+        /* אנימציה לסרגל התקדמות */
+        @keyframes fill {
+            from {
+                width: 0%;
+            }
+        }
+        .rank-bar {
+            animation: fill 1s ease-out;
+        }
     </style>
 </head>
 <body class="w-full h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white p-4">
@@ -55,13 +63,12 @@
         <p class="text-sm text-gray-300">גלגל עכבר = זום | גרירה = הזזה | לחיצה על מדינה לבחירה</p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[calc(100vh-140px)]">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 h-[calc(100vh-140px)]">
         
         <!-- פאנל ניהול (שמאל) -->
         <div class="bg-slate-800/50 backdrop-blur rounded-xl p-4 overflow-y-auto border border-white/10">
             <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                <i data-lucide="flag" class="w-5 h-5"></i>
-                בקרת משחק
+                🚩 בקרת משחק
             </h2>
 
             <div class="bg-slate-700/50 rounded-lg p-3 mb-4">
@@ -71,26 +78,23 @@
                     <div id="target-display" class="p-2 rounded bg-slate-600 transition-colors">מטרה: לא נבחר</div>
                 </div>
                 <button id="war-btn" onclick="declareWar()" class="w-full mt-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed p-2 rounded font-semibold flex items-center justify-center gap-2 transition-all">
-                    <i data-lucide="swords" class="w-4 h-4"></i>
-                    הכרז מלחמה!
+                    ⚔️ הכרז מלחמה!
                 </button>
             </div>
 
             <div class="bg-slate-700/50 rounded-lg p-3 mb-4">
                 <h3 class="font-semibold mb-2 text-sm">מהירות והגדרות</h3>
                 <div class="flex gap-2 mb-2">
-                    <button onclick="setSpeed(0.5)" class="speed-btn flex-1 p-1 bg-slate-600 rounded text-xs" data-speed="0.5">0.5x</button>
-                    <button onclick="setSpeed(1)" class="speed-btn flex-1 p-1 bg-blue-600 rounded text-xs" data-speed="1">1x</button>
-                    <button onclick="setSpeed(2)" class="speed-btn flex-1 p-1 bg-slate-600 rounded text-xs" data-speed="2">2x</button>
+                    <button onclick="setSpeed(0.5)" class="speed-btn flex-1 p-1 bg-slate-600 rounded text-xs hover:bg-slate-500" data-speed="0.5">0.5x</button>
+                    <button onclick="setSpeed(1)" class="speed-btn flex-1 p-1 bg-blue-600 rounded text-xs hover:bg-blue-500" data-speed="1">1x</button>
+                    <button onclick="setSpeed(2)" class="speed-btn flex-1 p-1 bg-slate-600 rounded text-xs hover:bg-slate-500" data-speed="2">2x</button>
                 </div>
                 <div class="flex gap-2">
                     <button id="pause-btn" onclick="togglePause()" class="flex-1 bg-yellow-600 hover:bg-yellow-700 p-2 rounded flex items-center justify-center gap-2 text-xs">
-                        <i data-lucide="pause" id="pause-icon" class="w-4 h-4"></i>
-                        <span id="pause-text">השהה</span>
+                        <span id="pause-text">⏸️ השהה</span>
                     </button>
                     <button onclick="resetGame()" class="flex-1 bg-purple-600 hover:bg-purple-700 p-2 rounded flex items-center justify-center gap-2 text-xs">
-                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                        איפוס
+                        🔄 איפוס
                     </button>
                 </div>
             </div>
@@ -98,8 +102,7 @@
             <!-- מלחמות פעילות -->
             <div id="active-wars-container" class="hidden bg-slate-700/50 rounded-lg p-3 mb-4">
                 <h3 class="font-semibold mb-2 text-sm flex items-center gap-2 text-red-400">
-                    <i data-lucide="swords" class="w-4 h-4"></i>
-                    מלחמות פעילות
+                    ⚔️ מלחמות פעילות
                 </h3>
                 <div id="wars-list" class="space-y-3"></div>
             </div>
@@ -110,50 +113,55 @@
             </div>
         </div>
 
-        <!-- מפה מרכזית (אמצע) -->
-        <div class="lg:col-span-2 bg-slate-800/30 backdrop-blur rounded-xl p-2 relative overflow-hidden border border-white/5">
+        <!-- מפה מרכזית (אמצע) - עכשיו גדולה יותר -->
+        <div class="lg:col-span-3 bg-slate-800/30 backdrop-blur rounded-xl p-2 relative overflow-hidden border border-white/5">
             <div class="absolute bottom-4 left-4 flex gap-2 z-10">
-                <button onclick="adjustZoom(1.2)" class="bg-blue-600 hover:bg-blue-700 p-2 rounded-lg"><i data-lucide="zoom-in" class="w-5 h-5"></i></button>
-                <button onclick="adjustZoom(0.8)" class="bg-blue-600 hover:bg-blue-700 p-2 rounded-lg"><i data-lucide="zoom-out" class="w-5 h-5"></i></button>
+                <button onclick="adjustZoom(1.2)" class="bg-blue-600 hover:bg-blue-700 p-2 rounded-lg text-xl">🔍+</button>
+                <button onclick="adjustZoom(0.8)" class="bg-blue-600 hover:bg-blue-700 p-2 rounded-lg text-xl">🔍-</button>
                 <div id="zoom-display" class="bg-black/50 backdrop-blur px-3 py-2 rounded-lg text-xs flex items-center">זום: 1.0x</div>
             </div>
 
             <div id="map-viewport" class="w-full h-full overflow-hidden map-container">
-                <svg id="world-svg" width="900" height="600" viewBox="0 0 900 600" class="w-full h-full transition-transform duration-100 ease-out origin-center">
-                    <rect width="900" height="600" fill="#0a192f" />
+                <svg id="world-svg" width="1400" height="800" viewBox="0 0 1400 800" class="w-full h-full transition-transform duration-100 ease-out origin-center">
+                    <rect width="1400" height="800" fill="#0a192f" />
                     <g id="war-lines-group"></g>
                     <g id="countries-group"></g>
                 </svg>
             </div>
         </div>
 
-        <!-- דירוג (ימין) -->
+        <!-- דירוג (ימין) - עם סרגלי התקדמות -->
         <div class="bg-slate-800/50 backdrop-blur rounded-xl p-4 overflow-y-auto border border-white/10">
-            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                <i data-lucide="users" class="w-5 h-5"></i>
-                דירוג עולמי
+            <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
+                🏆 דירוג עולמי
             </h2>
-            <div id="leaderboard" class="space-y-2"></div>
+            <div class="text-xs text-gray-400 mb-3">מבוסס על שטח וכוח</div>
+            <div id="leaderboard" class="space-y-3"></div>
         </div>
     </div>
 
     <script>
-        // --- נתונים וקבועים ---
+        // --- נתונים וקבועים (מפה גדולה יותר) ---
         const INITIAL_COUNTRIES = {
-            'ארה"ב': { strength: 100, territory: 100, color: '#3498db', path: 'M150,200 L120,180 L110,190 L100,200 L95,220 L100,250 L110,270 L130,280 L160,285 L190,280 L210,270 L230,250 L240,230 L245,210 L240,190 L220,180 L190,185 L170,190 Z' },
-            'קנדה': { strength: 55, territory: 85, color: '#7d3c98', path: 'M100,80 L95,100 L100,120 L110,140 L130,155 L160,165 L190,170 L220,165 L240,155 L255,140 L265,120 L268,100 L265,85 L250,75 L220,70 L180,72 L140,75 Z' },
-            'מקסיקו': { strength: 35, territory: 45, color: '#138d75', path: 'M120,290 L110,295 L105,305 L108,320 L115,335 L130,345 L150,348 L170,345 L185,335 L190,320 L188,305 L180,295 L160,292 Z' },
-            'ברזיל': { strength: 60, territory: 75, color: '#27ae60', path: 'M240,360 L230,370 L225,385 L228,405 L240,425 L260,440 L285,450 L310,448 L325,435 L332,415 L330,390 L320,370 L300,362 L275,360 Z' },
-            'ארגנטינה': { strength: 35, territory: 50, color: '#5dade2', path: 'M250,460 L245,475 L248,495 L258,515 L275,525 L292,523 L305,510 L308,490 L302,472 L288,463 Z' },
-            'בריטניה': { strength: 65, territory: 30, color: '#e67e22', path: 'M430,135 L425,140 L423,148 L426,158 L433,165 L443,167 L452,164 L458,156 L458,145 L453,138 L445,135 Z' },
-            'צרפת': { strength: 65, territory: 35, color: '#1abc9c', path: 'M435,175 L430,182 L432,195 L440,208 L455,215 L472,214 L485,207 L488,195 L485,183 L475,176 L458,174 Z' },
-            'גרמניה': { strength: 70, territory: 35, color: '#34495e', path: 'M468,160 L463,168 L465,178 L473,188 L487,192 L502,190 L510,182 L510,170 L505,162 L492,159 Z' },
-            'ספרד': { strength: 50, territory: 32, color: '#e74c3c', path: 'M420,200 L415,210 L418,225 L430,238 L448,242 L468,240 L482,230 L485,218 L480,208 L465,203 Z' },
-            'ישראל': { strength: 60, territory: 18, color: '#3498db', path: 'M520,265 L518,270 L520,278 L526,283 L532,281 L535,274 L533,268 Z' },
-            'רוסיה': { strength: 90, territory: 120, color: '#9b59b6', path: 'M540,75 L530,90 L535,110 L545,130 L560,145 L580,155 L610,165 L650,170 L690,168 L720,160 L740,145 L750,125 L748,100 L740,82 L720,70 L680,65 L630,68 L580,72 Z' },
-            'סין': { strength: 95, territory: 100, color: '#e74c3c', path: 'M650,190 L645,210 L650,235 L665,260 L685,280 L715,295 L745,300 L770,290 L785,270 L790,245 L788,220 L780,200 L760,190 L730,188 L700,192 Z' },
-            'הודו': { strength: 80, territory: 75, color: '#f39c12', path: 'M620,285 L615,300 L618,320 L630,345 L650,365 L675,370 L695,360 L705,340 L705,315 L695,295 L675,288 Z' },
-            'אוסטרליה': { strength: 50, territory: 70, color: '#117864', path: 'M730,410 L725,430 L730,455 L750,478 L780,492 L815,495 L845,485 L860,465 L862,440 L855,420 L835,412 Z' }
+            'ארה"ב': { strength: 100, territory: 100, color: '#3498db', path: 'M200,280 L165,250 L150,265 L135,280 L128,308 L135,350 L150,378 L180,392 L220,399 L265,392 L295,378 L322,350 L336,322 L343,294 L336,266 L308,252 L265,259 L238,266 Z' },
+            'קנדה': { strength: 55, territory: 85, color: '#7d3c98', path: 'M135,112 L128,140 L135,168 L150,196 L180,217 L220,231 L265,238 L308,231 L336,217 L357,196 L371,168 L375,140 L371,119 L350,105 L308,98 L252,101 L196,105 Z' },
+            'מקסיקו': { strength: 35, territory: 45, color: '#138d75', path: 'M165,406 L150,413 L143,427 L147,448 L161,469 L182,483 L210,487 L238,483 L259,469 L266,448 L263,427 L252,413 L224,409 Z' },
+            'ברזיל': { strength: 60, territory: 75, color: '#27ae60', path: 'M336,504 L322,518 L315,539 L319,567 L336,595 L364,616 L399,630 L434,627 L455,609 L465,581 L462,546 L448,518 L420,507 L385,504 Z' },
+            'ארגנטינה': { strength: 35, territory: 50, color: '#5dade2', path: 'M350,644 L343,665 L347,693 L361,721 L385,735 L409,732 L427,714 L431,686 L423,661 L403,648 Z' },
+            'בריטניה': { strength: 65, territory: 30, color: '#e67e22', path: 'M602,189 L595,196 L592,207 L596,221 L606,231 L620,234 L633,230 L641,218 L641,203 L634,193 L623,189 Z' },
+            'צרפת': { strength: 65, territory: 35, color: '#1abc9c', path: 'M609,245 L602,255 L605,273 L616,291 L637,301 L661,300 L679,290 L683,273 L679,256 L665,246 L641,244 Z' },
+            'גרמניה': { strength: 70, territory: 35, color: '#34495e', path: 'M655,224 L648,235 L651,249 L662,263 L682,269 L703,266 L714,255 L714,238 L707,227 L689,222 Z' },
+            'ספרד': { strength: 50, territory: 32, color: '#e74c3c', path: 'M588,280 L581,294 L585,315 L602,333 L627,339 L655,336 L675,322 L679,305 L672,291 L651,284 Z' },
+            'איטליה': { strength: 55, territory: 28, color: '#16a085', path: 'M665,294 L658,308 L658,322 L665,343 L679,357 L693,357 L707,343 L710,322 L707,308 L693,298 Z' },
+            'ישראל': { strength: 60, territory: 18, color: '#3498db', path: 'M728,371 L725,378 L728,389 L737,396 L746,393 L750,384 L747,375 Z' },
+            'רוסיה': { strength: 90, territory: 120, color: '#9b59b6', path: 'M756,105 L742,126 L749,154 L763,182 L784,203 L812,217 L854,231 L910,238 L966,235 L1008,224 L1036,203 L1050,175 L1047,140 L1036,115 L1008,98 L952,91 L882,95 L812,101 Z' },
+            'סין': { strength: 95, territory: 100, color: '#e74c3c', path: 'M910,266 L903,294 L910,329 L931,364 L959,392 L1001,413 L1043,420 L1078,406 L1099,378 L1106,343 L1103,308 L1092,280 L1064,266 L1022,263 L980,269 Z' },
+            'יפן': { strength: 75, territory: 35, color: '#e8daef', path: 'M1120,280 L1113,291 L1113,308 L1120,322 L1134,329 L1148,326 L1155,315 L1155,298 L1148,287 Z' },
+            'הודו': { strength: 80, territory: 75, color: '#f39c12', path: 'M868,399 L861,420 L865,448 L882,483 L910,511 L945,518 L973,504 L987,476 L987,441 L973,413 L945,403 Z' },
+            'דרום אפריקה': { strength: 45, territory: 55, color: '#85929e', path: 'M700,588 L693,609 L696,637 L710,665 L735,686 L770,693 L798,686 L812,665 L812,637 L805,609 L784,595 Z' },
+            'אוסטרליה': { strength: 50, territory: 70, color: '#117864', path: 'M1022,574 L1015,602 L1022,637 L1050,669 L1092,689 L1141,693 L1183,679 L1204,651 L1207,616 L1197,588 L1169,577 Z' },
+            'מצרים': { strength: 40, territory: 40, color: '#d4ac0d', path: 'M700,350 L693,364 L693,385 L700,399 L714,406 L728,403 L735,392 L735,371 L728,357 Z' },
+            'ערב הסעודית': { strength: 50, territory: 65, color: '#145a32', path: 'M742,371 L735,392 L742,420 L763,441 L791,448 L819,441 L833,420 L833,392 L826,371 Z' }
         };
 
         let countries = JSON.parse(JSON.stringify(INITIAL_COUNTRIES));
@@ -169,7 +177,6 @@
 
         // --- אתחול ---
         window.onload = () => {
-            lucide.createIcons();
             renderMap();
             updateLeaderboard();
             addLog("🎮 המשחק מוכן. בחר מדינה כדי להתחיל!");
@@ -206,17 +213,18 @@
                 text.setAttribute('y', center.y);
                 text.setAttribute('text-anchor', 'middle');
                 text.setAttribute('fill', 'white');
-                text.setAttribute('font-size', '10');
-                text.setAttribute('style', 'pointer-events: none; text-shadow: 1px 1px 2px black;');
+                text.setAttribute('font-size', '12');
+                text.setAttribute('font-weight', 'bold');
+                text.setAttribute('style', 'pointer-events: none; text-shadow: 2px 2px 4px black;');
                 text.textContent = `${name}`;
 
                 const stats = document.createElementNS("http://www.w3.org/2000/svg", "text");
                 stats.setAttribute('x', center.x);
-                stats.setAttribute('y', center.y + 12);
+                stats.setAttribute('y', center.y + 16);
                 stats.setAttribute('text-anchor', 'middle');
                 stats.setAttribute('fill', '#cbd5e1');
-                stats.setAttribute('font-size', '8');
-                stats.setAttribute('style', 'pointer-events: none;');
+                stats.setAttribute('font-size', '10');
+                stats.setAttribute('style', 'pointer-events: none; text-shadow: 1px 1px 2px black;');
                 stats.textContent = `💪${data.strength}`;
 
                 g.appendChild(path);
@@ -237,7 +245,7 @@
                 line.setAttribute('x1', c1.x); line.setAttribute('y1', c1.y);
                 line.setAttribute('x2', c2.x); line.setAttribute('y2', c2.y);
                 line.setAttribute('stroke', '#ef4444');
-                line.setAttribute('stroke-width', '2');
+                line.setAttribute('stroke-width', '3');
                 line.setAttribute('class', 'war-line');
                 group.appendChild(line);
             });
@@ -263,9 +271,9 @@
             const atkDisp = document.getElementById('attacker-display');
             const tgtDisp = document.getElementById('target-display');
             atkDisp.textContent = `תוקף: ${selectedCountry || 'לא נבחר'}`;
-            atkDisp.className = `p-2 rounded ${selectedCountry ? 'bg-blue-600' : 'bg-slate-600'}`;
+            atkDisp.className = `p-2 rounded transition-colors ${selectedCountry ? 'bg-blue-600' : 'bg-slate-600'}`;
             tgtDisp.textContent = `מטרה: ${targetCountry || 'לא נבחר'}`;
-            tgtDisp.className = `p-2 rounded ${targetCountry ? 'bg-red-600' : 'bg-slate-600'}`;
+            tgtDisp.className = `p-2 rounded transition-colors ${targetCountry ? 'bg-red-600' : 'bg-slate-600'}`;
         }
 
         function declareWar() {
@@ -362,19 +370,45 @@
         // --- עזרים וממשק ---
         function updateLeaderboard() {
             const board = document.getElementById('leaderboard');
-            const sorted = Object.entries(countries).sort((a, b) => b[1].territory - a[1].territory);
+            // חישוב ציון משולב: שטח + כוח
+            const sorted = Object.entries(countries)
+                .map(([name, data]) => ({
+                    name,
+                    ...data,
+                    score: data.territory + (data.strength * 0.5)
+                }))
+                .sort((a, b) => b.score - a.score);
+            
+            const maxScore = sorted[0].score;
             board.innerHTML = '';
-            sorted.forEach(([name, data], i) => {
+            
+            sorted.forEach((country, i) => {
                 const div = document.createElement('div');
-                div.className = `p-2 rounded-lg text-xs flex justify-between items-center ${i === 0 ? 'bg-yellow-600/40 border border-yellow-500' : 'bg-slate-700/30'}`;
+                const percentage = (country.score / maxScore) * 100;
+                const medalEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
+                
+                div.className = `rounded-lg overflow-hidden ${i === 0 ? 'ring-2 ring-yellow-500' : ''}`;
                 div.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <span class="font-bold w-4">${i+1}.</span>
-                        <span>${name}</span>
-                    </div>
-                    <div class="flex gap-3">
-                        <span>💪 ${data.strength}</span>
-                        <span class="font-bold">🏛️ ${data.territory}</span>
+                    <div class="bg-slate-700/50 p-2">
+                        <div class="flex justify-between items-center mb-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-xs w-6">${medalEmoji || (i+1)+'.'}</span>
+                                <span class="text-xs font-semibold">${country.name}</span>
+                            </div>
+                            <div class="text-xs font-bold text-yellow-400">${Math.round(country.score)}</div>
+                        </div>
+                        <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden mb-1">
+                            <div class="rank-bar h-full rounded-full transition-all duration-300 ${
+                                i === 0 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
+                                i === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
+                                i === 2 ? 'bg-gradient-to-r from-amber-600 to-amber-700' :
+                                'bg-gradient-to-r from-blue-500 to-blue-600'
+                            }" style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-gray-400">
+                            <span>💪 ${country.strength}</span>
+                            <span>🏛️ ${country.territory}</span>
+                        </div>
                     </div>
                 `;
                 board.appendChild(div);
@@ -385,7 +419,8 @@
             const log = document.getElementById('event-log');
             const entry = document.createElement('div');
             entry.className = "p-1 border-b border-white/5 last:border-0";
-            entry.textContent = `> ${msg}`;
+            const time = new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+            entry.textContent = `[${time}] ${msg}`;
             log.prepend(entry);
         }
 
@@ -414,9 +449,7 @@
 
         function togglePause() {
             isPaused = !isPaused;
-            document.getElementById('pause-text').textContent = isPaused ? 'המשך' : 'השהה';
-            document.getElementById('pause-icon').setAttribute('data-lucide', isPaused ? 'play' : 'pause');
-            lucide.createIcons();
+            document.getElementById('pause-text').textContent = isPaused ? '▶️ המשך' : '⏸️ השהה';
         }
 
         function resetGame() {
