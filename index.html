@@ -1,1 +1,1066 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>סימולטור מלחמות עולמי</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr 300px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 1400px) {
+            .game-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .map-container {
+            position: relative;
+            background: #1a1a2e;
+            border-radius: 15px;
+            padding: 20px;
+            min-height: 600px;
+        }
+
+        #worldMap {
+            width: 100%;
+            height: 600px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 50%, #90EE90 100%);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            border: 3px solid #444;
+        }
+
+        .country-marker {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .country-marker:hover {
+            transform: scale(1.2);
+            z-index: 10;
+        }
+
+        .country-marker.at-war {
+            animation: pulse 1s infinite;
+            border-color: #ff0000;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .attack-line {
+            position: absolute;
+            background: linear-gradient(90deg, #ff0000, #ff6600, #ffaa00);
+            pointer-events: none;
+            box-shadow: 0 0 10px #ff0000;
+        }
+
+        .attack-arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            pointer-events: none;
+        }
+
+        @keyframes attackPulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .section {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .section h3 {
+            margin-bottom: 10px;
+            color: #ffd700;
+            border-bottom: 2px solid #ffd700;
+            padding-bottom: 5px;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        select {
+            background: #fff;
+            color: #333;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        button.attack {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        button.defend {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        button.retreat {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        button.peace {
+            background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        }
+
+        .war-info {
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid #ff6666;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .power-bar {
+            width: 100%;
+            height: 30px;
+            background: #333;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .power-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .power-fill.attacker {
+            background: linear-gradient(90deg, #ff0000, #ff6600);
+            float: right;
+        }
+
+        .power-fill.defender {
+            background: linear-gradient(90deg, #0066ff, #00ccff);
+        }
+
+        .status-text {
+            text-align: center;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .log {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 14px;
+        }
+
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .country-info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+
+        .ai-action {
+            background: rgba(255, 215, 0, 0.2);
+            border: 2px solid #ffd700;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .disabled {
+            opacity: 0.5;
+            cursor: not-allowed !important;
+        }
+
+        .rankings-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .rankings-table th {
+            background: rgba(255, 215, 0, 0.3);
+            padding: 8px;
+            text-align: right;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        .rankings-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .rankings-table tr:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .rank-medal {
+            font-size: 16px;
+        }
+
+        .settings-group {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .settings-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: #ffd700;
+        }
+
+        .settings-group input[type="range"] {
+            width: 100%;
+            margin: 5px 0;
+        }
+
+        .settings-group input[type="checkbox"] {
+            margin-left: 5px;
+        }
+
+        .speed-display {
+            text-align: center;
+            font-weight: bold;
+            color: #00ff00;
+        }
+
+        .auto-battle-indicator {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            animation: pulse 1s infinite;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 סימולטור מלחמות עולמי 🌍</h1>
+        
+        <div class="game-grid">
+            <div class="control-panel">
+                <div class="panel section">
+                    <h3>⚙️ הגדרות משחק</h3>
+                    
+                    <div class="settings-group">
+                        <label>מהירות קרב:</label>
+                        <input type="range" id="battleSpeed" min="500" max="5000" value="2000" step="100">
+                        <div class="speed-display" id="speedDisplay">2.0 שניות</div>
+                    </div>
+
+                    <div class="settings-group">
+                        <label>
+                            <input type="checkbox" id="autoBattle" onchange="toggleAutoBattle()">
+                            קרב אוטומטי
+                        </label>
+                    </div>
+
+                    <div class="settings-group">
+                        <label>
+                            <input type="checkbox" id="showPowerBars" checked onchange="togglePowerBars()">
+                            הצג מדי כוח
+                        </label>
+                    </div>
+
+                    <div class="settings-group">
+                        <label>
+                            <input type="checkbox" id="soundEffects" checked>
+                            אפקטי קול (בקרוב)
+                        </label>
+                    </div>
+
+                    <div class="settings-group">
+                        <label>
+                            <input type="checkbox" id="animatedLines" checked onchange="renderMap()">
+                            קווי התקפה מונפשים
+                        </label>
+                    </div>
+
+                    <div id="autoBattleIndicator" style="display: none;" class="auto-battle-indicator">
+                        ⚔️ קרב אוטומטי פעיל ⚔️
+                    </div>
+                </div>
+
+                <div class="panel section">
+                    <h3>⚔️ בחר מדינות</h3>
+                    <label>תוקף:</label>
+                    <select id="attackerSelect"></select>
+                    
+                    <label>נתקף:</label>
+                    <select id="defenderSelect"></select>
+                    
+                    <button class="attack" onclick="startWar()">🔥 התחל מלחמה</button>
+                </div>
+
+                <div class="panel section" id="warControls" style="display: none;">
+                    <h3>🎮 פקודות קרב</h3>
+                    <button class="attack" onclick="performAction('attack')">⚔️ התקף</button>
+                    <button class="defend" onclick="performAction('defend')">🛡️ הגן</button>
+                    <button class="retreat" onclick="performAction('retreat')">🏃 נסוג</button>
+                    
+                    <div class="war-info" id="warStatus"></div>
+                </div>
+
+                <div class="panel section">
+                    <h3>🕊️ דיפלומטיה</h3>
+                    <button class="peace" onclick="proposePeace()">☮️ הצע שלום</button>
+                    <button class="peace" onclick="surrender()">🏳️ כניעה</button>
+                    
+                    <div class="ai-action" id="aiActions" style="display: none;"></div>
+                </div>
+
+                <div class="panel section">
+                    <h3>📊 מידע על מדינה</h3>
+                    <div class="country-info" id="countryInfo">
+                        בחר מדינה במפה לראות מידע
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="map-container">
+                    <h3 style="margin-bottom: 15px;">🗺️ מפת העולם</h3>
+                    <div id="worldMap"></div>
+                </div>
+
+                <div class="section" style="margin-top: 20px;">
+                    <h3>📜 יומן אירועים</h3>
+                    <div class="log" id="eventLog"></div>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <div class="panel section">
+                    <h3>🏆 דירוג מדינות</h3>
+                    <div style="max-height: 500px; overflow-y: auto;">
+                        <table class="rankings-table" id="rankingsTable">
+                            <thead>
+                                <tr>
+                                    <th>דירוג</th>
+                                    <th>מדינה</th>
+                                    <th>כוח</th>
+                                    <th>סטטוס</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rankingsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="panel section">
+                    <h3>📈 סטטיסטיקות</h3>
+                    <div class="country-info">
+                        <div id="gameStats">
+                            <strong>מלחמות פעילות:</strong> <span id="activeWars">0</span><br>
+                            <strong>סה"כ סיבובים:</strong> <span id="totalTurns">0</span><br>
+                            <strong>מדינות במלחמה:</strong> <span id="countriesAtWar">0</span><br>
+                            <strong>מדינות בשלום:</strong> <span id="countriesAtPeace">24</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // נתוני מדינות עם דירוג כוח (1-100)
+        const countries = {
+            'ארה"ב': { power: 100, flag: '🇺🇸', x: 15, y: 35, color: '#1e40af' },
+            'סין': { power: 95, flag: '🇨🇳', x: 75, y: 40, color: '#dc2626' },
+            'רוסיה': { power: 90, flag: '🇷🇺', x: 60, y: 25, color: '#16a34a' },
+            'הודו': { power: 75, flag: '🇮🇳', x: 70, y: 50, color: '#ea580c' },
+            'בריטניה': { power: 70, flag: '🇬🇧', x: 45, y: 28, color: '#7c3aed' },
+            'צרפת': { power: 68, flag: '🇫🇷', x: 47, y: 32, color: '#0891b2' },
+            'גרמניה': { power: 67, flag: '🇩🇪', x: 50, y: 30, color: '#4338ca' },
+            'יפן': { power: 65, flag: '🇯🇵', x: 85, y: 38, color: '#be123c' },
+            'דרום קוריאה': { power: 60, flag: '🇰🇷', x: 82, y: 42, color: '#059669' },
+            'איטליה': { power: 55, flag: '🇮🇹', x: 50, y: 36, color: '#0284c7' },
+            'טורקיה': { power: 53, flag: '🇹🇷', x: 55, y: 38, color: '#dc2626' },
+            'ברזיל': { power: 50, flag: '🇧🇷', x: 30, y: 65, color: '#16a34a' },
+            'ישראל': { power: 48, flag: '🇮🇱', x: 54, y: 45, color: '#2563eb' },
+            'איראן': { power: 45, flag: '🇮🇷', x: 62, y: 43, color: '#15803d' },
+            'מצרים': { power: 42, flag: '🇪🇬', x: 53, y: 48, color: '#b91c1c' },
+            'ספרד': { power: 40, flag: '🇪🇸', x: 44, y: 38, color: '#eab308' },
+            'אוסטרליה': { power: 38, flag: '🇦🇺', x: 82, y: 75, color: '#0891b2' },
+            'קנדה': { power: 36, flag: '🇨🇦', x: 18, y: 22, color: '#dc2626' },
+            'ערב הסעודית': { power: 35, flag: '🇸🇦', x: 58, y: 48, color: '#16a34a' },
+            'מקסיקו': { power: 32, flag: '🇲🇽', x: 12, y: 48, color: '#15803d' },
+            'ארגנטינה': { power: 30, flag: '🇦🇷', x: 28, y: 78, color: '#0891b2' },
+            'דרום אפריקה': { power: 28, flag: '🇿🇦', x: 52, y: 75, color: '#eab308' },
+            'אינדונזיה': { power: 25, flag: '🇮🇩', x: 78, y: 62, color: '#dc2626' },
+            'פקיסטן': { power: 23, flag: '🇵🇰', x: 68, y: 45, color: '#16a34a' }
+        };
+
+        let currentWar = null;
+        let attackLines = [];
+        let warTurns = 0;
+        let autoBattleInterval = null;
+        let totalTurnsAllWars = 0;
+
+        function init() {
+            populateSelects();
+            renderMap();
+            updateRankings();
+            updateStats();
+            addLog('המשחק מוכן! בחר מדינות כדי להתחיל מלחמה');
+            
+            // Speed slider listener
+            document.getElementById('battleSpeed').addEventListener('input', function() {
+                const speed = this.value / 1000;
+                document.getElementById('speedDisplay').textContent = speed.toFixed(1) + ' שניות';
+                if (autoBattleInterval) {
+                    stopAutoBattle();
+                    startAutoBattle();
+                }
+            });
+        }
+
+        function updateRankings() {
+            const tbody = document.getElementById('rankingsBody');
+            tbody.innerHTML = '';
+            
+            const sorted = Object.entries(countries).sort((a, b) => b[1].power - a[1].power);
+            
+            sorted.forEach(([name, data], index) => {
+                const row = tbody.insertRow();
+                
+                let medal = '';
+                if (index === 0) medal = '🥇';
+                else if (index === 1) medal = '🥈';
+                else if (index === 2) medal = '🥉';
+                else medal = index + 1;
+                
+                let status = '🕊️';
+                if (currentWar) {
+                    if (currentWar.attacker === name) status = '⚔️ תוקף';
+                    else if (currentWar.defender === name) status = '🛡️ מותקף';
+                }
+                
+                row.innerHTML = `
+                    <td class="rank-medal">${medal}</td>
+                    <td>${data.flag} ${name}</td>
+                    <td>${data.power}</td>
+                    <td>${status}</td>
+                `;
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('activeWars').textContent = currentWar ? '1' : '0';
+            document.getElementById('totalTurns').textContent = totalTurnsAllWars;
+            document.getElementById('countriesAtWar').textContent = currentWar ? '2' : '0';
+            document.getElementById('countriesAtPeace').textContent = currentWar ? '22' : '24';
+        }
+
+        function toggleAutoBattle() {
+            const enabled = document.getElementById('autoBattle').checked;
+            const indicator = document.getElementById('autoBattleIndicator');
+            
+            if (enabled && currentWar) {
+                startAutoBattle();
+                indicator.style.display = 'block';
+            } else {
+                stopAutoBattle();
+                indicator.style.display = 'none';
+            }
+        }
+
+        function startAutoBattle() {
+            if (!currentWar) return;
+            
+            const speed = parseInt(document.getElementById('battleSpeed').value);
+            
+            autoBattleInterval = setInterval(() => {
+                if (!currentWar) {
+                    stopAutoBattle();
+                    return;
+                }
+                
+                // AI chooses action based on situation
+                const actions = ['attack', 'defend', 'retreat'];
+                const weights = [0.6, 0.3, 0.1]; // Higher chance to attack
+                const action = weightedRandom(actions, weights);
+                
+                performAction(action, true);
+            }, speed);
+        }
+
+        function stopAutoBattle() {
+            if (autoBattleInterval) {
+                clearInterval(autoBattleInterval);
+                autoBattleInterval = null;
+            }
+            document.getElementById('autoBattleIndicator').style.display = 'none';
+        }
+
+        function weightedRandom(items, weights) {
+            let total = weights.reduce((a, b) => a + b, 0);
+            let random = Math.random() * total;
+            
+            for (let i = 0; i < items.length; i++) {
+                if (random < weights[i]) return items[i];
+                random -= weights[i];
+            }
+            return items[0];
+        }
+
+        function togglePowerBars() {
+            const enabled = document.getElementById('showPowerBars').checked;
+            const warStatus = document.getElementById('warStatus');
+            if (!enabled && warStatus) {
+                warStatus.querySelectorAll('.power-bar').forEach(bar => {
+                    bar.style.display = enabled ? 'block' : 'none';
+                });
+            }
+            updateWarStatus();
+        }
+
+        function init() {
+            populateSelects();
+            renderMap();
+            addLog('המשחק מוכן! בחר מדינות כדי להתחיל מלחמה');
+        }
+
+        function populateSelects() {
+            const attackerSelect = document.getElementById('attackerSelect');
+            const defenderSelect = document.getElementById('defenderSelect');
+            
+            Object.keys(countries).sort().forEach(country => {
+                const option1 = new Option(`${countries[country].flag} ${country} (כוח: ${countries[country].power})`, country);
+                const option2 = new Option(`${countries[country].flag} ${country} (כוח: ${countries[country].power})`, country);
+                attackerSelect.add(option1);
+                defenderSelect.add(option2);
+            });
+        }
+
+        function renderMap() {
+            const map = document.getElementById('worldMap');
+            map.innerHTML = '';
+
+            Object.entries(countries).forEach(([name, data]) => {
+                const marker = document.createElement('div');
+                marker.className = 'country-marker';
+                marker.style.left = `${data.x}%`;
+                marker.style.top = `${data.y}%`;
+                marker.style.background = data.color;
+                marker.innerHTML = data.flag;
+                marker.title = name;
+                
+                marker.addEventListener('click', () => showCountryInfo(name));
+                marker.addEventListener('mouseenter', (e) => showTooltip(e, name));
+                marker.addEventListener('mouseleave', hideTooltip);
+
+                if (currentWar && (currentWar.attacker === name || currentWar.defender === name)) {
+                    marker.classList.add('at-war');
+                }
+
+                map.appendChild(marker);
+            });
+
+            renderAttackLines();
+        }
+
+        function renderAttackLines() {
+            const map = document.getElementById('worldMap');
+            attackLines.forEach(line => line.remove());
+            attackLines = [];
+
+            if (currentWar && document.getElementById('animatedLines').checked) {
+                const attacker = countries[currentWar.attacker];
+                const defender = countries[currentWar.defender];
+                
+                const mapRect = map.getBoundingClientRect();
+                const x1 = (attacker.x / 100) * mapRect.width;
+                const y1 = (attacker.y / 100) * mapRect.height;
+                const x2 = (defender.x / 100) * mapRect.width;
+                const y2 = (defender.y / 100) * mapRect.height;
+                
+                // Draw multiple attack lines for effect
+                for (let i = 0; i < 3; i++) {
+                    const line = document.createElement('div');
+                    line.className = 'attack-line';
+                    
+                    const dx = x2 - x1;
+                    const dy = y2 - y1;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                    
+                    line.style.position = 'absolute';
+                    line.style.left = x1 + 'px';
+                    line.style.top = (y1 - 2 + i * 3) + 'px';
+                    line.style.width = distance + 'px';
+                    line.style.height = '3px';
+                    line.style.transformOrigin = '0 50%';
+                    line.style.transform = `rotate(${angle}deg)`;
+                    line.style.opacity = 1 - (i * 0.2);
+                    line.style.animation = `attackPulse ${1 + i * 0.2}s infinite`;
+                    
+                    map.appendChild(line);
+                    attackLines.push(line);
+                }
+                
+                // Add arrow at end
+                const arrow = document.createElement('div');
+                arrow.className = 'attack-arrow';
+                arrow.style.position = 'absolute';
+                arrow.style.left = (x2 - 10) + 'px';
+                arrow.style.top = (y2 - 10) + 'px';
+                
+                const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+                arrow.style.borderLeft = '10px solid transparent';
+                arrow.style.borderRight = '10px solid transparent';
+                arrow.style.borderBottom = '15px solid #ff0000';
+                arrow.style.transform = `rotate(${angle + 90}deg)`;
+                arrow.style.animation = 'attackPulse 0.8s infinite';
+                
+                map.appendChild(arrow);
+                attackLines.push(arrow);
+            }
+        }
+
+        function showTooltip(e, country) {
+            const tooltip = document.getElementById('tooltip');
+            const data = countries[country];
+            tooltip.innerHTML = `<strong>${data.flag} ${country}</strong><br>כוח: ${data.power}/100`;
+            tooltip.style.display = 'block';
+            tooltip.style.left = e.pageX + 10 + 'px';
+            tooltip.style.top = e.pageY + 10 + 'px';
+        }
+
+        function hideTooltip() {
+            document.getElementById('tooltip').style.display = 'none';
+        }
+
+        function showCountryInfo(country) {
+            const data = countries[country];
+            const info = document.getElementById('countryInfo');
+            
+            let status = 'שלווה';
+            if (currentWar) {
+                if (currentWar.attacker === country) status = 'תוקף';
+                else if (currentWar.defender === country) status = 'מותקף';
+            }
+            
+            info.innerHTML = `
+                <div style="font-size: 24px; margin-bottom: 10px;">${data.flag}</div>
+                <strong>${country}</strong><br>
+                <strong>כוח צבאי:</strong> ${data.power}/100<br>
+                <strong>סטטוס:</strong> ${status}
+            `;
+        }
+
+        function startWar() {
+            const attacker = document.getElementById('attackerSelect').value;
+            const defender = document.getElementById('defenderSelect').value;
+
+            if (attacker === defender) {
+                alert('מדינה לא יכולה לתקוף את עצמה!');
+                return;
+            }
+
+            const attackerPower = countries[attacker].power;
+            const defenderPower = countries[defender].power;
+
+            currentWar = {
+                attacker: attacker,
+                defender: defender,
+                attackerStrength: attackerPower,
+                defenderStrength: defenderPower,
+                attackerMorale: 100,
+                defenderMorale: 100
+            };
+
+            warTurns = 0;
+
+            // אם מדינה חלשה תוקפת חזקה, תגובה אוטומטית
+            if (attackerPower < defenderPower * 0.5) {
+                addLog(`⚠️ ${defender} כועס על ההתקפה הלא הגיונית ומתכונן למתקפת נגד הרסנית!`);
+                showAIAction(`${defender} מזהה את החולשה ומכין תגובה מלחמתית חזקה`);
+            }
+
+            document.getElementById('warControls').style.display = 'block';
+            updateWarStatus();
+            updateRankings();
+            updateStats();
+            renderMap();
+            addLog(`🔥 מלחמה החלה! ${attacker} תוקף את ${defender}`);
+            
+            // Start auto-battle if enabled
+            if (document.getElementById('autoBattle').checked) {
+                startAutoBattle();
+                document.getElementById('autoBattleIndicator').style.display = 'block';
+            }
+        }
+
+        function performAction(action, isAuto = false) {
+            if (!currentWar) return;
+
+            warTurns++;
+            totalTurnsAllWars++;
+            const attacker = currentWar.attacker;
+            const defender = currentWar.defender;
+            const powerRatio = currentWar.attackerStrength / currentWar.defenderStrength;
+
+            let damage = 0;
+            let counterDamage = 0;
+
+            switch(action) {
+                case 'attack':
+                    damage = 5 + Math.random() * 10 * powerRatio;
+                    counterDamage = 3 + Math.random() * 8 * (1/powerRatio);
+                    currentWar.defenderStrength -= damage;
+                    currentWar.attackerStrength -= counterDamage;
+                    addLog(`⚔️ ${attacker} תוקף! נגרם ${damage.toFixed(1)} נזק ל${defender}, וספג ${counterDamage.toFixed(1)} נזק בתגובה`);
+                    break;
+
+                case 'defend':
+                    counterDamage = 2 + Math.random() * 5 * (1/powerRatio);
+                    currentWar.attackerStrength -= counterDamage;
+                    currentWar.defenderMorale += 5;
+                    addLog(`🛡️ ${attacker} מתמקד בהגנה. ${defender} מנצל ותוקף, נגרם ${counterDamage.toFixed(1)} נזק`);
+                    break;
+
+                case 'retreat':
+                    damage = 8 + Math.random() * 12 * (1/powerRatio);
+                    currentWar.attackerStrength -= damage;
+                    currentWar.attackerMorale -= 15;
+                    addLog(`🏃 ${attacker} נסוג! ${defender} רודף ותוקף, נגרם ${damage.toFixed(1)} נזק חמור`);
+                    break;
+            }
+
+            // AI מגיב - תמיד!
+            if (!isAuto) {
+                aiResponse();
+            } else {
+                // In auto mode, defender also acts
+                aiDefenderAction();
+            }
+            
+            checkWarEnd();
+            updateWarStatus();
+            updateRankings();
+            updateStats();
+        }
+
+        function aiDefenderAction() {
+            const powerRatio = currentWar.defenderStrength / currentWar.attackerStrength;
+            
+            let action;
+            if (powerRatio > 1.3) {
+                action = 'counterAttack';
+            } else if (powerRatio < 0.8) {
+                action = 'defend';
+            } else {
+                const rand = Math.random();
+                if (rand < 0.5) action = 'counterAttack';
+                else if (rand < 0.85) action = 'defend';
+                else action = 'retreat';
+            }
+
+            let message = '';
+            let damage = 0;
+            
+            switch(action) {
+                case 'counterAttack':
+                    damage = 7 + Math.random() * 12 * powerRatio;
+                    currentWar.attackerStrength -= damage;
+                    message = `${currentWar.defender} מבצע מתקפת נגד! נגרם ${damage.toFixed(1)} נזק`;
+                    break;
+                case 'defend':
+                    currentWar.defenderMorale += 3;
+                    damage = 2 + Math.random() * 4;
+                    currentWar.attackerStrength -= damage;
+                    message = `${currentWar.defender} מתבצר ומחזק הגנות, גורם ${damage.toFixed(1)} נזק`;
+                    break;
+                case 'retreat':
+                    damage = 10 + Math.random() * 8 * (1/powerRatio);
+                    currentWar.defenderStrength -= damage;
+                    currentWar.defenderMorale -= 10;
+                    message = `${currentWar.defender} נסוג! ${currentWar.attacker} רודף ותוקף, נגרם ${damage.toFixed(1)} נזק`;
+                    break;
+            }
+
+            addLog(`🤖 ${message}`);
+        }
+
+        function aiResponse() {
+            const powerRatio = currentWar.defenderStrength / currentWar.attackerStrength;
+            const aiActions = ['defend', 'attack', 'counterAttack'];
+            
+            let aiChoice;
+            if (powerRatio > 1.5) {
+                aiChoice = 'counterAttack';
+            } else if (powerRatio < 0.7) {
+                aiChoice = 'defend';
+            } else {
+                aiChoice = aiActions[Math.floor(Math.random() * aiActions.length)];
+            }
+
+            let message = '';
+            switch(aiChoice) {
+                case 'counterAttack':
+                    const damage = 7 + Math.random() * 12 * powerRatio;
+                    currentWar.attackerStrength -= damage;
+                    message = `${currentWar.defender} מבצע מתקפת נגד עוצמתית! נגרם ${damage.toFixed(1)} נזק`;
+                    break;
+                case 'defend':
+                    currentWar.defenderMorale += 3;
+                    message = `${currentWar.defender} מתבצר ומחזק הגנות`;
+                    break;
+                case 'attack':
+                    const atkDamage = 5 + Math.random() * 8 * powerRatio;
+                    currentWar.attackerStrength -= atkDamage;
+                    message = `${currentWar.defender} תוקף בחזרה! נגרם ${atkDamage.toFixed(1)} נזק`;
+                    break;
+            }
+
+            showAIAction(message);
+            addLog(`🤖 ${message}`);
+        }
+
+        function showAIAction(message) {
+            const aiDiv = document.getElementById('aiActions');
+            aiDiv.innerHTML = `<strong>פעולת AI:</strong><br>${message}`;
+            aiDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                aiDiv.style.display = 'none';
+            }, 4000);
+        }
+
+        function updateWarStatus() {
+            if (!currentWar) return;
+
+            const status = document.getElementById('warStatus');
+            const attackerPercent = Math.max(0, (currentWar.attackerStrength / countries[currentWar.attacker].power * 100));
+            const defenderPercent = Math.max(0, (currentWar.defenderStrength / countries[currentWar.defender].power * 100));
+
+            const total = attackerPercent + defenderPercent;
+            const attackerWidth = (attackerPercent / total * 100).toFixed(1);
+            const defenderWidth = (defenderPercent / total * 100).toFixed(1);
+
+            status.innerHTML = `
+                <strong>סיבוב ${warTurns}</strong><br>
+                <div style="margin: 10px 0;">
+                    <div>${countries[currentWar.attacker].flag} ${currentWar.attacker}</div>
+                    <div class="power-bar">
+                        <div class="power-fill attacker" style="width: ${attackerWidth}%">
+                            ${attackerPercent.toFixed(0)}%
+                        </div>
+                    </div>
+                </div>
+                <div style="margin: 10px 0;">
+                    <div>${countries[currentWar.defender].flag} ${currentWar.defender}</div>
+                    <div class="power-bar">
+                        <div class="power-fill defender" style="width: ${defenderWidth}%">
+                            ${defenderPercent.toFixed(0)}%
+                        </div>
+                    </div>
+                </div>
+                <div class="status-text">
+                    ${attackerPercent > defenderPercent ? 
+                        `${currentWar.attacker} מוביל! 📈` : 
+                        `${currentWar.defender} מוביל! 📈`}
+                </div>
+            `;
+        }
+
+        function checkWarEnd() {
+            if (!currentWar) return;
+
+            if (currentWar.attackerStrength <= 0 || currentWar.attackerMorale <= 0) {
+                endWar(currentWar.defender);
+            } else if (currentWar.defenderStrength <= 0 || currentWar.defenderMorale <= 0) {
+                endWar(currentWar.attacker);
+            }
+        }
+
+        function endWar(winner) {
+            const loser = winner === currentWar.attacker ? currentWar.defender : currentWar.attacker;
+            addLog(`🏆 ${winner} ניצח במלחמה נגד ${loser} לאחר ${warTurns} סיבובים!`);
+            alert(`🏆 ${winner} ניצח במלחמה!\n\nהמלחמה נמשכה ${warTurns} סיבובים`);
+            
+            stopAutoBattle();
+            currentWar = null;
+            document.getElementById('warControls').style.display = 'none';
+            updateRankings();
+            updateStats();
+            renderMap();
+        }
+
+        function proposePeace() {
+            if (!currentWar) {
+                alert('אין מלחמה פעילה');
+                return;
+            }
+
+            const powerRatio = currentWar.defenderStrength / currentWar.attackerStrength;
+            const acceptChance = powerRatio > 1.2 ? 0.7 : (powerRatio < 0.8 ? 0.3 : 0.5);
+
+            if (Math.random() < acceptChance) {
+                addLog(`🕊️ ${currentWar.defender} מקבל את הצעת השלום!`);
+                alert('הצעת השלום התקבלה! המלחמה הסתיימה');
+                stopAutoBattle();
+                currentWar = null;
+                document.getElementById('warControls').style.display = 'none';
+                updateRankings();
+                updateStats();
+                renderMap();
+            } else {
+                addLog(`❌ ${currentWar.defender} דוחה את הצעת השלום וממשיך להילחם!`);
+                showAIAction(`${currentWar.defender} דוחה שלום ותוקף בזעם!`);
+                const damage = 10 + Math.random() * 15;
+                currentWar.attackerStrength -= damage;
+                updateWarStatus();
+            }
+        }
+
+        function surrender() {
+            if (!currentWar) {
+                alert('אין מלחמה פעילה');
+                return;
+            }
+
+            if (confirm(`האם אתה בטוח שאתה רוצה להיכנע בשם ${currentWar.attacker}?`)) {
+                addLog(`🏳️ ${currentWar.attacker} נכנע ל${currentWar.defender}!`);
+                alert(`${currentWar.attacker} נכנע. ${currentWar.defender} ניצח!`);
+                stopAutoBattle();
+                currentWar = null;
+                document.getElementById('warControls').style.display = 'none';
+                updateRankings();
+                updateStats();
+                renderMap();
+            }
+        }
+
+        function addLog(message) {
+            const log = document.getElementById('eventLog');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const time = new Date().toLocaleTimeString('he-IL');
+            entry.innerHTML = `<strong>[${time}]</strong> ${message}`;
+            log.insertBefore(entry, log.firstChild);
+        }
+
+        // Initialize game
+        init();
+    </script>
+</body>
+</html>
