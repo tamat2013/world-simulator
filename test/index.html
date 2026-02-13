@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>סימולטור מלחמות עולמי - מהדורה מורחבת</title>
+    <title>סימולטור מלחמות עולמי</title>
     <style>
         * {
             margin: 0;
@@ -95,26 +95,9 @@
             border-color: #ff0000;
         }
 
-        .country-marker.civil-war {
-            animation: civilWarPulse 1s infinite;
-            border-color: #ff00ff;
-            box-shadow: 0 0 20px #ff00ff;
-        }
-
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.1); }
-        }
-
-        @keyframes civilWarPulse {
-            0%, 100% { 
-                transform: scale(1) rotate(0deg); 
-                border-color: #ff00ff;
-            }
-            50% { 
-                transform: scale(1.15) rotate(180deg); 
-                border-color: #ff0000;
-            }
         }
 
         .attack-line {
@@ -122,11 +105,6 @@
             background: linear-gradient(90deg, #ff0000, #ff6600, #ffaa00);
             pointer-events: none;
             box-shadow: 0 0 10px #ff0000;
-        }
-
-        .attack-line.civil-war-line {
-            background: linear-gradient(90deg, #ff00ff, #ff0080, #ff00ff);
-            box-shadow: 0 0 15px #ff00ff;
         }
 
         .attack-arrow {
@@ -177,10 +155,6 @@
             color: #333;
         }
 
-        select[multiple] {
-            height: 120px;
-        }
-
         button {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -206,6 +180,36 @@
 
         button.peace {
             background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+            font-size: 14px;
+            padding: 8px;
+        }
+
+        button.surrender {
+            background: linear-gradient(135deg, #2c3e50, #000000);
+            font-size: 14px;
+            padding: 8px;
+        }
+
+        .diplomacy-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .diplomacy-column {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .diplomacy-column h4 {
+            font-size: 12px;
+            text-align: center;
+            color: #ccc;
         }
 
         .war-info {
@@ -214,11 +218,6 @@
             border-radius: 10px;
             padding: 15px;
             margin-top: 10px;
-        }
-
-        .civil-war-info {
-            background: rgba(255, 0, 255, 0.1);
-            border: 2px solid #ff00ff;
         }
 
         .power-bar {
@@ -250,30 +249,6 @@
             background: linear-gradient(90deg, #0066ff, #00ccff);
         }
 
-        .power-fill.participant-1 {
-            background: linear-gradient(90deg, #ff0000, #ff6600);
-        }
-
-        .power-fill.participant-2 {
-            background: linear-gradient(90deg, #0066ff, #00ccff);
-        }
-
-        .power-fill.participant-3 {
-            background: linear-gradient(90deg, #00ff00, #66ff66);
-        }
-
-        .power-fill.participant-4 {
-            background: linear-gradient(90deg, #ffff00, #ffcc00);
-        }
-
-        .power-fill.participant-5 {
-            background: linear-gradient(90deg, #ff00ff, #ff66ff);
-        }
-
-        .power-fill.participant-6 {
-            background: linear-gradient(90deg, #00ffff, #66ffff);
-        }
-
         .status-text {
             text-align: center;
             font-size: 14px;
@@ -296,10 +271,6 @@
 
         .log-entry:last-child {
             border-bottom: none;
-        }
-
-        .log-entry.civil-war {
-            color: #ff00ff;
         }
 
         .country-info {
@@ -334,11 +305,6 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-
-        .disabled {
-            opacity: 0.5;
-            cursor: not-allowed !important;
         }
 
         .rankings-table {
@@ -405,58 +371,16 @@
             animation: pulse 1s infinite;
             margin: 10px 0;
         }
-
-        .participant-selector {
-            margin: 10px 0;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-        }
-
-        .participant-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 5px 0;
-            padding: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
-        }
-
-        .remove-participant {
-            background: #ff4444;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-            width: auto;
-            margin: 0;
-        }
-
-        .add-participant {
-            background: #44ff44;
-            color: #000;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🌍 סימולטור מלחמות עולמי - מהדורה מורחבת 🌍</h1>
+        <h1>🌍 סימולטור מלחמות עולמי 🌍</h1>
         
         <div class="game-grid">
             <div class="control-panel">
                 <div class="panel section">
                     <h3>⚙️ הגדרות משחק</h3>
-                    
-                    <div class="settings-group">
-                        <label>
-                            <input type="checkbox" id="allowCivilWar" checked>
-                            אפשר מלחמות אזרחים
-                        </label>
-                    </div>
                     
                     <div class="settings-group">
                         <label>מהירות קרב:</label>
@@ -480,13 +404,6 @@
 
                     <div class="settings-group">
                         <label>
-                            <input type="checkbox" id="soundEffects" checked>
-                            אפקטי קול (בקרוב)
-                        </label>
-                    </div>
-
-                    <div class="settings-group">
-                        <label>
                             <input type="checkbox" id="animatedLines" checked onchange="renderMap()">
                             קווי התקפה מונפשים
                         </label>
@@ -498,34 +415,39 @@
                 </div>
 
                 <div class="panel section">
-                    <h3>⚔️ ארגן מלחמה</h3>
+                    <h3>⚔️ בחר מדינות</h3>
+                    <label>תוקף:</label>
+                    <select id="attackerSelect"></select>
                     
-                    <div id="participantsList" class="participant-selector">
-                        <div class="participant-item">
-                            <label style="flex: 1;">משתתף 1:</label>
-                            <select id="participant1" style="width: auto; flex: 2;"></select>
-                        </div>
-                        <div class="participant-item">
-                            <label style="flex: 1;">משתתף 2:</label>
-                            <select id="participant2" style="width: auto; flex: 2;"></select>
-                        </div>
-                    </div>
+                    <label>נתקף:</label>
+                    <select id="defenderSelect"></select>
                     
-                    <button class="add-participant" onclick="addParticipant()">➕ הוסף משתתף</button>
                     <button class="attack" onclick="startWar()">🔥 התחל מלחמה</button>
                 </div>
 
                 <div class="panel section" id="warControls" style="display: none;">
-                    <h3>🎮 פקודות קרב</h3>
-                    <div id="warControlButtons"></div>
+                    <h3>🎮 פקודות קרב (תוקף)</h3>
+                    <button class="attack" onclick="performAction('attack')">⚔️ התקף</button>
+                    <button class="defend" onclick="performAction('defend')">🛡️ הגן</button>
+                    <button class="retreat" onclick="performAction('retreat')">🏃 נסוג</button>
                     
                     <div class="war-info" id="warStatus"></div>
                 </div>
 
-                <div class="panel section">
+                <div class="panel section" id="diplomacyPanel" style="display: none;">
                     <h3>🕊️ דיפלומטיה</h3>
-                    <button class="peace" onclick="proposePeace()">☮️ הצע שלום</button>
-                    <button class="peace" onclick="surrender()">🏳️ כניעה</button>
+                    <div class="diplomacy-grid">
+                        <div class="diplomacy-column">
+                            <h4 id="labelAttackerDiplomacy">תוקף</h4>
+                            <button class="peace" onclick="proposePeace('attacker')">☮️ הצע שלום</button>
+                            <button class="surrender" onclick="surrender('attacker')">🏳️ כניעה</button>
+                        </div>
+                        <div class="diplomacy-column">
+                            <h4 id="labelDefenderDiplomacy">מגן</h4>
+                            <button class="peace" onclick="proposePeace('defender')">☮️ הצע שלום</button>
+                            <button class="surrender" onclick="surrender('defender')">🏳️ כניעה</button>
+                        </div>
+                    </div>
                     
                     <div class="ai-action" id="aiActions" style="display: none;"></div>
                 </div>
@@ -586,7 +508,6 @@
     <div class="tooltip" id="tooltip"></div>
 
     <script>
-        // נתוני מדינות עם דירוג כוח (1-100)
         const countries = {
             'ארה"ב': { power: 100, flag: '🇺🇸', x: 15, y: 35, color: '#1e40af' },
             'סין': { power: 95, flag: '🇨🇳', x: 75, y: 40, color: '#dc2626' },
@@ -619,16 +540,14 @@
         let warTurns = 0;
         let autoBattleInterval = null;
         let totalTurnsAllWars = 0;
-        let participantCount = 2;
 
         function init() {
             populateSelects();
             renderMap();
             updateRankings();
             updateStats();
-            addLog('המשחק מוכן! ארגן מלחמה עם 2 או יותר משתתפים');
+            addLog('המשחק מוכן! בחר מדינות כדי להתחיל מלחמה');
             
-            // Speed slider listener
             document.getElementById('battleSpeed').addEventListener('input', function() {
                 const speed = this.value / 1000;
                 document.getElementById('speedDisplay').textContent = speed.toFixed(1) + ' שניות';
@@ -639,347 +558,55 @@
             });
         }
 
-        function populateSelects() {
-            for (let i = 1; i <= 6; i++) {
-                const select = document.getElementById(`participant${i}`);
-                if (select) {
-                    select.innerHTML = '';
-                    Object.keys(countries).sort().forEach(country => {
-                        const option = new Option(`${countries[country].flag} ${country} (כוח: ${countries[country].power})`, country);
-                        select.add(option);
-                    });
-                }
-            }
-        }
-
-        function addParticipant() {
-            if (participantCount >= 6) {
-                alert('מקסימום 6 משתתפים במלחמה');
-                return;
-            }
-            
-            participantCount++;
-            const participantsList = document.getElementById('participantsList');
-            
-            const div = document.createElement('div');
-            div.className = 'participant-item';
-            div.id = `participant-item-${participantCount}`;
-            div.innerHTML = `
-                <label style="flex: 1;">משתתף ${participantCount}:</label>
-                <select id="participant${participantCount}" style="width: auto; flex: 2;"></select>
-                <button class="remove-participant" onclick="removeParticipant(${participantCount})">✖</button>
-            `;
-            participantsList.appendChild(div);
-            
-            populateSelects();
-        }
-
-        function removeParticipant(num) {
-            if (participantCount <= 2) {
-                alert('צריכים לפחות 2 משתתפים במלחמה');
-                return;
-            }
-            
-            const item = document.getElementById(`participant-item-${num}`);
-            if (item) {
-                item.remove();
-                participantCount--;
-                
-                // Renumber remaining participants
-                const items = document.querySelectorAll('.participant-item');
-                items.forEach((item, index) => {
-                    const label = item.querySelector('label');
-                    if (label) label.textContent = `משתתף ${index + 1}:`;
-                });
-            }
-        }
-
-        function startWar() {
-            const participants = [];
-            const participantData = {};
-            
-            // Collect all participants
-            for (let i = 1; i <= participantCount; i++) {
-                const select = document.getElementById(`participant${i}`);
-                if (select && select.value) {
-                    participants.push(select.value);
-                }
-            }
-            
-            // Check for duplicates (except if civil war is allowed)
-            const allowCivilWar = document.getElementById('allowCivilWar').checked;
-            const uniqueParticipants = [...new Set(participants)];
-            
-            if (!allowCivilWar && uniqueParticipants.length !== participants.length) {
-                alert('בחרת את אותה מדינה פעמיים! אפשר מלחמות אזרחים בהגדרות אם אתה רוצה');
-                return;
-            }
-            
-            if (participants.length < 2) {
-                alert('צריך לפחות 2 משתתפים במלחמה');
-                return;
-            }
-            
-            // Check if this is a civil war
-            const isCivilWar = uniqueParticipants.length === 1;
-            
-            // Initialize participant data
-            participants.forEach((country, index) => {
-                const key = isCivilWar ? `${country}-סיעה-${index + 1}` : country;
-                participantData[key] = {
-                    country: country,
-                    strength: countries[country].power,
-                    morale: 100,
-                    isActive: true,
-                    originalCountry: country
-                };
-            });
-            
-            currentWar = {
-                participants: participantData,
-                isCivilWar: isCivilWar,
-                activeCount: participants.length
-            };
-            
-            warTurns = 0;
-            
-            if (isCivilWar) {
-                addLog(`💥 מלחמת אזרחים פרצה ב${uniqueParticipants[0]}! ${participants.length} סיעות נלחמות על השליטה!`, true);
-            } else {
-                const countryList = participants.map(c => countries[c].flag + ' ' + c).join(', ');
-                addLog(`🔥 מלחמה רב-משתתפית החלה! משתתפים: ${countryList}`);
-            }
-            
-            document.getElementById('warControls').style.display = 'block';
-            createWarControlButtons();
-            updateWarStatus();
-            updateRankings();
-            updateStats();
-            renderMap();
-            
-            // Start auto-battle if enabled
-            if (document.getElementById('autoBattle').checked) {
-                startAutoBattle();
-                document.getElementById('autoBattleIndicator').style.display = 'block';
-            }
-        }
-
-        function createWarControlButtons() {
-            const container = document.getElementById('warControlButtons');
-            container.innerHTML = '';
-            
-            Object.keys(currentWar.participants).forEach((participantKey, index) => {
-                if (!currentWar.participants[participantKey].isActive) return;
-                
-                const participant = currentWar.participants[participantKey];
-                const displayName = currentWar.isCivilWar ? participantKey : participant.country;
-                const flag = countries[participant.country].flag;
-                
-                const buttonGroup = document.createElement('div');
-                buttonGroup.style.marginBottom = '15px';
-                buttonGroup.innerHTML = `
-                    <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">
-                        ${flag} ${displayName}
-                    </div>
-                    <button class="attack" onclick="performAction('${participantKey}', 'attack')">⚔️ התקף</button>
-                    <button class="defend" onclick="performAction('${participantKey}', 'defend')">🛡️ הגן</button>
-                    <button class="retreat" onclick="performAction('${participantKey}', 'retreat')">🏃 נסוג</button>
-                `;
-                container.appendChild(buttonGroup);
-            });
-        }
-
-        function performAction(participantKey, action, isAuto = false) {
-            if (!currentWar || !currentWar.participants[participantKey] || !currentWar.participants[participantKey].isActive) return;
-
-            warTurns++;
-            totalTurnsAllWars++;
-            
-            const participant = currentWar.participants[participantKey];
-            const displayName = currentWar.isCivilWar ? participantKey : participant.country;
-            const flag = countries[participant.country].flag;
-            
-            // Get all active opponents
-            const opponents = Object.keys(currentWar.participants).filter(key => 
-                key !== participantKey && currentWar.participants[key].isActive
-            );
-            
-            if (opponents.length === 0) {
-                endWar(participantKey);
-                return;
-            }
-            
-            // Select random opponent
-            const targetKey = opponents[Math.floor(Math.random() * opponents.length)];
-            const target = currentWar.participants[targetKey];
-            const targetDisplayName = currentWar.isCivilWar ? targetKey : target.country;
-            const targetFlag = countries[target.country].flag;
-            
-            const powerRatio = participant.strength / target.strength;
-            let damage = 0;
-            let counterDamage = 0;
-
-            switch(action) {
-                case 'attack':
-                    damage = 5 + Math.random() * 10 * powerRatio;
-                    counterDamage = 3 + Math.random() * 8 * (1/powerRatio);
-                    target.strength -= damage;
-                    participant.strength -= counterDamage;
-                    addLog(`⚔️ ${flag} ${displayName} תוקף את ${targetFlag} ${targetDisplayName}! נגרם ${damage.toFixed(1)} נזק, וספג ${counterDamage.toFixed(1)} נזק בתגובה`, currentWar.isCivilWar);
-                    break;
-
-                case 'defend':
-                    counterDamage = 2 + Math.random() * 5 * (1/powerRatio);
-                    participant.strength -= counterDamage;
-                    participant.morale += 5;
-                    addLog(`🛡️ ${flag} ${displayName} מתמקד בהגנה. ${targetFlag} ${targetDisplayName} מנצל ותוקף, נגרם ${counterDamage.toFixed(1)} נזק`, currentWar.isCivilWar);
-                    break;
-
-                case 'retreat':
-                    damage = 8 + Math.random() * 12 * (1/powerRatio);
-                    participant.strength -= damage;
-                    participant.morale -= 15;
-                    addLog(`🏃 ${flag} ${displayName} נסוג! ${targetFlag} ${targetDisplayName} רודף ותוקף, נגרם ${damage.toFixed(1)} נזק חמור`, currentWar.isCivilWar);
-                    break;
-            }
-
-            // Check if participants are eliminated
-            checkParticipantElimination();
-            
-            // AI responses for other participants
-            if (!isAuto && currentWar.activeCount > 1) {
-                setTimeout(() => aiParticipantsResponse(participantKey), 500);
-            }
-            
-            checkWarEnd();
-            updateWarStatus();
-            updateRankings();
-            updateStats();
-        }
-
-        function checkParticipantElimination() {
-            Object.keys(currentWar.participants).forEach(key => {
-                const participant = currentWar.participants[key];
-                if (participant.isActive && (participant.strength <= 0 || participant.morale <= 0)) {
-                    participant.isActive = false;
-                    currentWar.activeCount--;
-                    const displayName = currentWar.isCivilWar ? key : participant.country;
-                    const flag = countries[participant.country].flag;
-                    addLog(`💀 ${flag} ${displayName} הובס ויצא מהמלחמה!`, currentWar.isCivilWar);
-                }
-            });
-        }
-
-        function aiParticipantsResponse(skipKey) {
-            const activeParticipants = Object.keys(currentWar.participants).filter(key => 
-                key !== skipKey && currentWar.participants[key].isActive
-            );
-            
-            activeParticipants.forEach((key, index) => {
-                setTimeout(() => {
-                    const participant = currentWar.participants[key];
-                    const actions = ['attack', 'defend', 'retreat'];
-                    const weights = [0.6, 0.3, 0.1];
-                    const action = weightedRandom(actions, weights);
-                    performAction(key, action, true);
-                }, index * 300);
-            });
-        }
-
         function updateRankings() {
             const tbody = document.getElementById('rankingsBody');
             tbody.innerHTML = '';
-            
             const sorted = Object.entries(countries).sort((a, b) => b[1].power - a[1].power);
-            
             sorted.forEach(([name, data], index) => {
                 const row = tbody.insertRow();
-                
-                let medal = '';
-                if (index === 0) medal = '🥇';
-                else if (index === 1) medal = '🥈';
-                else if (index === 2) medal = '🥉';
-                else medal = index + 1;
-                
+                let medal = index < 3 ? ['🥇', '🥈', '🥉'][index] : index + 1;
                 let status = '🕊️';
                 if (currentWar) {
-                    const isInWar = Object.values(currentWar.participants).some(p => 
-                        p.country === name && p.isActive
-                    );
-                    if (isInWar) {
-                        status = currentWar.isCivilWar ? '⚔️🆚⚔️ מלחמת אזרחים' : '⚔️ במלחמה';
-                    }
+                    if (currentWar.attacker === name) status = '⚔️ תוקף';
+                    else if (currentWar.defender === name) status = '🛡️ מותקף';
                 }
-                
-                row.innerHTML = `
-                    <td class="rank-medal">${medal}</td>
-                    <td>${data.flag} ${name}</td>
-                    <td>${data.power}</td>
-                    <td>${status}</td>
-                `;
+                row.innerHTML = `<td class="rank-medal">${medal}</td><td>${data.flag} ${name}</td><td>${data.power}</td><td>${status}</td>`;
             });
         }
 
         function updateStats() {
             document.getElementById('activeWars').textContent = currentWar ? '1' : '0';
             document.getElementById('totalTurns').textContent = totalTurnsAllWars;
-            const inWar = currentWar ? currentWar.activeCount : 0;
-            document.getElementById('countriesAtWar').textContent = inWar;
-            document.getElementById('countriesAtPeace').textContent = 24 - inWar;
+            document.getElementById('countriesAtWar').textContent = currentWar ? '2' : '0';
+            document.getElementById('countriesAtPeace').textContent = currentWar ? '22' : '24';
         }
 
         function toggleAutoBattle() {
             const enabled = document.getElementById('autoBattle').checked;
-            const indicator = document.getElementById('autoBattleIndicator');
-            
-            if (enabled && currentWar) {
-                startAutoBattle();
-                indicator.style.display = 'block';
-            } else {
-                stopAutoBattle();
-                indicator.style.display = 'none';
-            }
+            if (enabled && currentWar) startAutoBattle();
+            else stopAutoBattle();
         }
 
         function startAutoBattle() {
             if (!currentWar) return;
-            
             const speed = parseInt(document.getElementById('battleSpeed').value);
-            
+            document.getElementById('autoBattleIndicator').style.display = 'block';
             autoBattleInterval = setInterval(() => {
-                if (!currentWar || currentWar.activeCount <= 1) {
-                    stopAutoBattle();
-                    return;
-                }
-                
-                // Get random active participant
-                const activeKeys = Object.keys(currentWar.participants).filter(key => 
-                    currentWar.participants[key].isActive
-                );
-                
-                if (activeKeys.length > 0) {
-                    const randomKey = activeKeys[Math.floor(Math.random() * activeKeys.length)];
-                    const actions = ['attack', 'defend', 'retreat'];
-                    const weights = [0.6, 0.3, 0.1];
-                    const action = weightedRandom(actions, weights);
-                    
-                    performAction(randomKey, action, true);
-                }
+                if (!currentWar) { stopAutoBattle(); return; }
+                const actions = ['attack', 'defend', 'retreat'];
+                const action = weightedRandom(actions, [0.6, 0.3, 0.1]);
+                performAction(action, true);
             }, speed);
         }
 
         function stopAutoBattle() {
-            if (autoBattleInterval) {
-                clearInterval(autoBattleInterval);
-                autoBattleInterval = null;
-            }
+            if (autoBattleInterval) { clearInterval(autoBattleInterval); autoBattleInterval = null; }
             document.getElementById('autoBattleIndicator').style.display = 'none';
         }
 
         function weightedRandom(items, weights) {
             let total = weights.reduce((a, b) => a + b, 0);
             let random = Math.random() * total;
-            
             for (let i = 0; i < items.length; i++) {
                 if (random < weights[i]) return items[i];
                 random -= weights[i];
@@ -991,10 +618,18 @@
             updateWarStatus();
         }
 
+        function populateSelects() {
+            const aS = document.getElementById('attackerSelect');
+            const dS = document.getElementById('defenderSelect');
+            Object.keys(countries).sort().forEach(country => {
+                aS.add(new Option(`${countries[country].flag} ${country} (כוח: ${countries[country].power})`, country));
+                dS.add(new Option(`${countries[country].flag} ${country} (כוח: ${countries[country].power})`, country));
+            });
+        }
+
         function renderMap() {
             const map = document.getElementById('worldMap');
             map.innerHTML = '';
-
             Object.entries(countries).forEach(([name, data]) => {
                 const marker = document.createElement('div');
                 marker.className = 'country-marker';
@@ -1002,24 +637,12 @@
                 marker.style.top = `${data.y}%`;
                 marker.style.background = data.color;
                 marker.innerHTML = data.flag;
-                marker.title = name;
-                
                 marker.addEventListener('click', () => showCountryInfo(name));
                 marker.addEventListener('mouseenter', (e) => showTooltip(e, name));
                 marker.addEventListener('mouseleave', hideTooltip);
-
-                if (currentWar) {
-                    const isInWar = Object.values(currentWar.participants).some(p => 
-                        p.country === name && p.isActive
-                    );
-                    if (isInWar) {
-                        marker.classList.add(currentWar.isCivilWar ? 'civil-war' : 'at-war');
-                    }
-                }
-
+                if (currentWar && (currentWar.attacker === name || currentWar.defender === name)) marker.classList.add('at-war');
                 map.appendChild(marker);
             });
-
             renderAttackLines();
         }
 
@@ -1027,239 +650,193 @@
             const map = document.getElementById('worldMap');
             attackLines.forEach(line => line.remove());
             attackLines = [];
-
             if (currentWar && document.getElementById('animatedLines').checked) {
+                const attacker = countries[currentWar.attacker];
+                const defender = countries[currentWar.defender];
                 const mapRect = map.getBoundingClientRect();
-                
-                // For civil war, create circular attack pattern
-                if (currentWar.isCivilWar) {
-                    const activeParticipants = Object.values(currentWar.participants).filter(p => p.isActive);
-                    if (activeParticipants.length > 0) {
-                        const country = activeParticipants[0].country;
-                        const countryData = countries[country];
-                        const centerX = (countryData.x / 100) * mapRect.width;
-                        const centerY = (countryData.y / 100) * mapRect.height;
-                        
-                        // Create explosion-like lines from center
-                        for (let angle = 0; angle < 360; angle += 45) {
-                            const rad = (angle * Math.PI) / 180;
-                            const length = 80;
-                            const endX = centerX + Math.cos(rad) * length;
-                            const endY = centerY + Math.sin(rad) * length;
-                            
-                            const line = document.createElement('div');
-                            line.className = 'attack-line civil-war-line';
-                            line.style.position = 'absolute';
-                            line.style.left = centerX + 'px';
-                            line.style.top = centerY + 'px';
-                            line.style.width = length + 'px';
-                            line.style.height = '3px';
-                            line.style.transformOrigin = '0 50%';
-                            line.style.transform = `rotate(${angle}deg)`;
-                            line.style.animation = 'attackPulse 0.8s infinite';
-                            
-                            map.appendChild(line);
-                            attackLines.push(line);
-                        }
-                    }
-                } else {
-                    // Regular multi-participant war - draw lines between all participants
-                    const activeParticipants = Object.entries(currentWar.participants)
-                        .filter(([key, p]) => p.isActive)
-                        .map(([key, p]) => ({ key, country: p.country }));
-                    
-                    for (let i = 0; i < activeParticipants.length; i++) {
-                        for (let j = i + 1; j < activeParticipants.length; j++) {
-                            const country1 = countries[activeParticipants[i].country];
-                            const country2 = countries[activeParticipants[j].country];
-                            
-                            const x1 = (country1.x / 100) * mapRect.width;
-                            const y1 = (country1.y / 100) * mapRect.height;
-                            const x2 = (country2.x / 100) * mapRect.width;
-                            const y2 = (country2.y / 100) * mapRect.height;
-                            
-                            const dx = x2 - x1;
-                            const dy = y2 - y1;
-                            const distance = Math.sqrt(dx * dx + dy * dy);
-                            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-                            
-                            const line = document.createElement('div');
-                            line.className = 'attack-line';
-                            line.style.position = 'absolute';
-                            line.style.left = x1 + 'px';
-                            line.style.top = y1 + 'px';
-                            line.style.width = distance + 'px';
-                            line.style.height = '3px';
-                            line.style.transformOrigin = '0 50%';
-                            line.style.transform = `rotate(${angle}deg)`;
-                            line.style.animation = 'attackPulse 1s infinite';
-                            
-                            map.appendChild(line);
-                            attackLines.push(line);
-                        }
-                    }
+                const x1 = (attacker.x / 100) * mapRect.width;
+                const y1 = (attacker.y / 100) * mapRect.height;
+                const x2 = (defender.x / 100) * mapRect.width;
+                const y2 = (defender.y / 100) * mapRect.height;
+                for (let i = 0; i < 3; i++) {
+                    const line = document.createElement('div');
+                    line.className = 'attack-line';
+                    const dx = x2 - x1, dy = y2 - y1, dist = Math.sqrt(dx*dx+dy*dy), angle = Math.atan2(dy, dx)*180/Math.PI;
+                    line.style.left = x1 + 'px';
+                    line.style.top = (y1 - 2 + i * 3) + 'px';
+                    line.style.width = dist + 'px';
+                    line.style.height = '3px';
+                    line.style.transformOrigin = '0 50%';
+                    line.style.transform = `rotate(${angle}deg)`;
+                    line.style.animation = `attackPulse ${1 + i * 0.2}s infinite`;
+                    map.appendChild(line);
+                    attackLines.push(line);
                 }
             }
         }
 
         function showTooltip(e, country) {
-            const tooltip = document.getElementById('tooltip');
-            const data = countries[country];
-            tooltip.innerHTML = `<strong>${data.flag} ${country}</strong><br>כוח: ${data.power}/100`;
-            tooltip.style.display = 'block';
-            tooltip.style.left = e.pageX + 10 + 'px';
-            tooltip.style.top = e.pageY + 10 + 'px';
+            const t = document.getElementById('tooltip');
+            t.innerHTML = `<strong>${countries[country].flag} ${country}</strong><br>כוח: ${countries[country].power}/100`;
+            t.style.display = 'block'; t.style.left = e.pageX + 10 + 'px'; t.style.top = e.pageY + 10 + 'px';
         }
 
-        function hideTooltip() {
-            document.getElementById('tooltip').style.display = 'none';
-        }
+        function hideTooltip() { document.getElementById('tooltip').style.display = 'none'; }
 
         function showCountryInfo(country) {
             const data = countries[country];
-            const info = document.getElementById('countryInfo');
-            
             let status = 'שלווה';
             if (currentWar) {
-                const isInWar = Object.values(currentWar.participants).some(p => 
-                    p.country === country && p.isActive
-                );
-                if (isInWar) {
-                    status = currentWar.isCivilWar ? 'מלחמת אזרחים!' : 'במלחמה';
-                }
+                if (currentWar.attacker === country) status = 'תוקף';
+                else if (currentWar.defender === country) status = 'מותקף';
             }
-            
-            info.innerHTML = `
+            document.getElementById('countryInfo').innerHTML = `
                 <div style="font-size: 24px; margin-bottom: 10px;">${data.flag}</div>
-                <strong>${country}</strong><br>
-                <strong>כוח צבאי:</strong> ${data.power}/100<br>
-                <strong>סטטוס:</strong> ${status}
+                <strong>${country}</strong><br><strong>כוח צבאי:</strong> ${data.power}/100<br><strong>סטטוס:</strong> ${status}
             `;
+        }
+
+        function startWar() {
+            const attacker = document.getElementById('attackerSelect').value;
+            const defender = document.getElementById('defenderSelect').value;
+            if (attacker === defender) { alert('מדינה לא יכולה לתקוף את עצמה!'); return; }
+            currentWar = {
+                attacker: attacker, defender: defender,
+                attackerStrength: countries[attacker].power, defenderStrength: countries[defender].power,
+                attackerMorale: 100, defenderMorale: 100
+            };
+            warTurns = 0;
+            document.getElementById('warControls').style.display = 'block';
+            document.getElementById('diplomacyPanel').style.display = 'block';
+            document.getElementById('labelAttackerDiplomacy').textContent = `${countries[attacker].flag} ${attacker}`;
+            document.getElementById('labelDefenderDiplomacy').textContent = `${countries[defender].flag} ${defender}`;
+            updateWarStatus(); updateRankings(); updateStats(); renderMap();
+            addLog(`🔥 מלחמה החלה! ${attacker} תוקף את ${defender}`);
+            if (document.getElementById('autoBattle').checked) startAutoBattle();
+        }
+
+        function performAction(action, isAuto = false) {
+            if (!currentWar) return;
+            warTurns++; totalTurnsAllWars++;
+            const attacker = currentWar.attacker;
+            const defender = currentWar.defender;
+            const powerRatio = currentWar.attackerStrength / currentWar.defenderStrength;
+            let damage = 0, counterDamage = 0;
+
+            if (action === 'attack') {
+                damage = 5 + Math.random() * 10 * powerRatio;
+                counterDamage = 3 + Math.random() * 8 * (1/powerRatio);
+                currentWar.defenderStrength -= damage; currentWar.attackerStrength -= counterDamage;
+                addLog(`⚔️ ${attacker} תוקף! נגרם ${damage.toFixed(1)} נזק ל${defender}, וספג ${counterDamage.toFixed(1)} נזק`);
+            } else if (action === 'defend') {
+                counterDamage = 2 + Math.random() * 5 * (1/powerRatio);
+                currentWar.attackerStrength -= counterDamage; currentWar.defenderMorale += 5;
+                addLog(`🛡️ ${attacker} מתמקד בהגנה. נספגו פחות אבידות`);
+            } else if (action === 'retreat') {
+                damage = 8 + Math.random() * 12;
+                currentWar.attackerStrength -= damage; currentWar.attackerMorale -= 15;
+                addLog(`🏃 ${attacker} נסוג וספג אש בזמן הנסיגה`);
+            }
+
+            if (!isAuto) aiDefenderAction();
+            else aiDefenderAction();
+
+            checkWarEnd(); updateWarStatus(); updateRankings(); updateStats();
+        }
+
+        function aiDefenderAction() {
+            const powerRatio = currentWar.defenderStrength / currentWar.attackerStrength;
+            let action = powerRatio > 1.3 ? 'counterAttack' : (powerRatio < 0.8 ? 'defend' : (Math.random() < 0.5 ? 'counterAttack' : 'defend'));
+            let damage = 0;
+            if (action === 'counterAttack') {
+                damage = 7 + Math.random() * 12 * powerRatio;
+                currentWar.attackerStrength -= damage;
+                addLog(`🤖 ${currentWar.defender} מבצע מתקפת נגד! נגרם ${damage.toFixed(1)} נזק`);
+            } else {
+                currentWar.defenderMorale += 3;
+                addLog(`🤖 ${currentWar.defender} מתבצר בהגנה`);
+            }
         }
 
         function updateWarStatus() {
             if (!currentWar) return;
-
-            const status = document.getElementById('warStatus');
-            let html = `<strong>סיבוב ${warTurns}</strong><br>`;
+            const s = document.getElementById('warStatus');
+            const aP = Math.max(0, (currentWar.attackerStrength / countries[currentWar.attacker].power * 100));
+            const dP = Math.max(0, (currentWar.defenderStrength / countries[currentWar.defender].power * 100));
+            const showBars = document.getElementById('showPowerBars').checked;
             
-            if (currentWar.isCivilWar) {
-                html += `<div style="text-align: center; color: #ff00ff; font-weight: bold; margin: 10px 0;">💥 מלחמת אזרחים 💥</div>`;
-                status.classList.add('civil-war-info');
-            } else {
-                status.classList.remove('civil-war-info');
-            }
-            
-            Object.entries(currentWar.participants).forEach(([key, participant], index) => {
-                if (!participant.isActive) return;
-                
-                const displayName = currentWar.isCivilWar ? key : participant.country;
-                const flag = countries[participant.country].flag;
-                const maxPower = countries[participant.country].power;
-                const percent = Math.max(0, (participant.strength / maxPower * 100));
-                
-                html += `
-                    <div style="margin: 10px 0;">
-                        <div>${flag} ${displayName}</div>
-                        <div class="power-bar">
-                            <div class="power-fill participant-${(index % 6) + 1}" style="width: ${percent}%">
-                                ${percent.toFixed(0)}%
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            status.innerHTML = html;
+            s.innerHTML = `<strong>סיבוב ${warTurns}</strong><br>` + 
+                (showBars ? `
+                <div style="margin: 10px 0;">
+                    <div>${countries[currentWar.attacker].flag} ${currentWar.attacker}</div>
+                    <div class="power-bar"><div class="power-fill attacker" style="width: ${aP}%">${aP.toFixed(0)}%</div></div>
+                </div>
+                <div style="margin: 10px 0;">
+                    <div>${countries[currentWar.defender].flag} ${currentWar.defender}</div>
+                    <div class="power-bar"><div class="power-fill defender" style="width: ${dP}%">${dP.toFixed(0)}%</div></div>
+                </div>` : `<p>${currentWar.attacker}: ${aP.toFixed(0)}% | ${currentWar.defender}: ${dP.toFixed(0)}%</p>`) +
+                `<div class="status-text">${aP > dP ? currentWar.attacker : currentWar.defender} מוביל! 📈</div>`;
         }
 
         function checkWarEnd() {
             if (!currentWar) return;
-
-            if (currentWar.activeCount <= 1) {
-                const winner = Object.entries(currentWar.participants).find(([key, p]) => p.isActive);
-                if (winner) {
-                    endWar(winner[0]);
-                }
-            }
+            if (currentWar.attackerStrength <= 0) endWar(currentWar.defender);
+            else if (currentWar.defenderStrength <= 0) endWar(currentWar.attacker);
         }
 
-        function endWar(winnerKey) {
-            const winner = currentWar.participants[winnerKey];
-            const displayName = currentWar.isCivilWar ? winnerKey : winner.country;
-            const flag = countries[winner.country].flag;
-            
-            if (currentWar.isCivilWar) {
-                addLog(`🏆 ${flag} ${displayName} ניצח במלחמת האזרחים לאחר ${warTurns} סיבובים!`, true);
-                alert(`🏆 ${displayName} ניצח במלחמת האזרחים!\n\nהמלחמה נמשכה ${warTurns} סיבובים`);
-            } else {
-                addLog(`🏆 ${flag} ${displayName} ניצח במלחמה הרב-משתתפית לאחר ${warTurns} סיבובים!`);
-                alert(`🏆 ${displayName} ניצח במלחמה!\n\nהמלחמה נמשכה ${warTurns} סיבובים`);
-            }
-            
-            stopAutoBattle();
-            currentWar = null;
+        function endWar(winner) {
+            const loser = winner === currentWar.attacker ? currentWar.defender : currentWar.attacker;
+            addLog(`🏆 ${winner} ניצח במלחמה נגד ${loser}!`);
+            alert(`🏆 ${winner} ניצח במלחמה!`);
+            stopAutoBattle(); currentWar = null;
             document.getElementById('warControls').style.display = 'none';
-            updateRankings();
-            updateStats();
-            renderMap();
+            document.getElementById('diplomacyPanel').style.display = 'none';
+            updateRankings(); updateStats(); renderMap();
         }
 
-        function proposePeace() {
-            if (!currentWar) {
-                alert('אין מלחמה פעילה');
-                return;
-            }
-
-            if (Math.random() < 0.5) {
-                addLog(`🕊️ הצעת השלום התקבלה! כל המשתתפים מסכימים לשלום`, currentWar.isCivilWar);
-                alert('הצעת השלום התקבלה! המלחמה הסתיימה');
-                stopAutoBattle();
-                currentWar = null;
+        function proposePeace(side) {
+            if (!currentWar) return;
+            const proposer = side === 'attacker' ? currentWar.attacker : currentWar.defender;
+            const target = side === 'attacker' ? currentWar.defender : currentWar.attacker;
+            const pRatio = currentWar.attackerStrength / currentWar.defenderStrength;
+            
+            // סיכוי קבלה מבוסס על מצב הכוחות
+            let acceptChance = side === 'attacker' ? (pRatio < 0.7 ? 0.8 : 0.3) : (pRatio > 1.3 ? 0.8 : 0.3);
+            
+            if (Math.random() < acceptChance) {
+                addLog(`🕊️ ${target} קיבל את הצעת השלום של ${proposer}!`);
+                alert('הצעת השלום התקבלה!');
+                stopAutoBattle(); currentWar = null;
                 document.getElementById('warControls').style.display = 'none';
-                updateRankings();
-                updateStats();
-                renderMap();
+                document.getElementById('diplomacyPanel').style.display = 'none';
+                updateRankings(); updateStats(); renderMap();
             } else {
-                addLog(`❌ הצעת השלום נדחתה! הלחימה נמשכת`, currentWar.isCivilWar);
+                addLog(`❌ ${target} דחה את הצעת השלום של ${proposer}!`);
+                const damage = 5 + Math.random() * 5;
+                if (side === 'attacker') currentWar.attackerStrength -= damage;
+                else currentWar.defenderStrength -= damage;
+                updateWarStatus();
             }
         }
 
-        function surrender() {
-            if (!currentWar) {
-                alert('אין מלחמה פעילה');
-                return;
-            }
-
-            if (confirm('האם אתה בטוח שאתה רוצה להכריז על כניעה כללית?')) {
-                const activeParticipants = Object.entries(currentWar.participants)
-                    .filter(([key, p]) => p.isActive);
-                
-                if (activeParticipants.length > 0) {
-                    const winner = activeParticipants[0];
-                    const displayName = currentWar.isCivilWar ? winner[0] : winner[1].country;
-                    addLog(`🏳️ כניעה כללית! ${displayName} מנצח!`, currentWar.isCivilWar);
-                }
-                
-                stopAutoBattle();
-                currentWar = null;
-                document.getElementById('warControls').style.display = 'none';
-                updateRankings();
-                updateStats();
-                renderMap();
+        function surrender(side) {
+            if (!currentWar) return;
+            const loser = side === 'attacker' ? currentWar.attacker : currentWar.defender;
+            const winner = side === 'attacker' ? currentWar.defender : currentWar.attacker;
+            if (confirm(`האם ${loser} בטוח רוצה להיכנע?`)) {
+                addLog(`🏳️ ${loser} נכנע ל${winner}!`);
+                endWar(winner);
             }
         }
 
-        function addLog(message, isCivilWar = false) {
+        function addLog(message) {
             const log = document.getElementById('eventLog');
             const entry = document.createElement('div');
-            entry.className = 'log-entry' + (isCivilWar ? ' civil-war' : '');
-            const time = new Date().toLocaleTimeString('he-IL');
-            entry.innerHTML = `<strong>[${time}]</strong> ${message}`;
+            entry.className = 'log-entry';
+            entry.innerHTML = `<strong>[${new Date().toLocaleTimeString('he-IL')}]</strong> ${message}`;
             log.insertBefore(entry, log.firstChild);
         }
 
-        // Initialize game
         init();
     </script>
 </body>
