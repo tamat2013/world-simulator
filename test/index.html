@@ -731,14 +731,16 @@
                     strength: countries[country].power,
                     morale: 100,
                     isActive: true,
-                    originalCountry: country
+                    originalCountry: country,
+                    allies: [] // List of allied participant keys
                 };
             });
             
             currentWar = {
                 participants: participantData,
                 isCivilWar: isCivilWar,
-                activeCount: participants.length
+                activeCount: participants.length,
+                peaceOffers: {} // Track peace offers between participants
             };
             
             warTurns = 0;
@@ -816,6 +818,7 @@
                         <button class="defend" onclick="performAction('${participantKey}', 'defend')">🛡️ הגן</button>
                         <button class="retreat" onclick="performAction('${participantKey}', 'retreat')">🏃 נסוג</button>
                         <button class="peace" onclick="proposePeaceFor('${participantKey}')">☮️ שלום</button>
+                        <button class="peace" onclick="proposeAllianceFor('${participantKey}')" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">🤝 ברית</button>
                         <button class="peace" onclick="surrenderFor('${participantKey}')">🏳️ כניעה</button>
                     `;
                     container.appendChild(buttonGroup);
@@ -833,9 +836,11 @@
             const displayName = currentWar.isCivilWar ? participantKey : participant.country;
             const flag = countries[participant.country].flag;
             
-            // Get all active opponents
+            // Get all active opponents (not allies)
             const opponents = Object.keys(currentWar.participants).filter(key => 
-                key !== participantKey && currentWar.participants[key].isActive
+                key !== participantKey && 
+                currentWar.participants[key].isActive &&
+                !participant.allies.includes(key)
             );
             
             if (opponents.length === 0) {
@@ -852,14 +857,34 @@
             const powerRatio = participant.strength / target.strength;
             let damage = 0;
             let counterDamage = 0;
+            let allyBonus = 0;
 
             switch(action) {
                 case 'attack':
                     damage = 5 + Math.random() * 10 * powerRatio;
+                    
+                    // Add ally support to attack
+                    if (participant.allies.length > 0) {
+                        participant.allies.forEach(allyKey => {
+                            const ally = currentWar.participants[allyKey];
+                            if (ally && ally.isActive) {
+                                const allyDamage = 2 + Math.random() * 5 * (ally.strength / target.strength);
+                                allyBonus += allyDamage;
+                            }
+                        });
+                    }
+                    
+                    damage += allyBonus;
                     counterDamage = 3 + Math.random() * 8 * (1/powerRatio);
                     target.strength -= damage;
                     participant.strength -= counterDamage;
-                    addLog(`⚔️ ${flag} ${displayName} תוקף את ${targetFlag} ${targetDisplayName}! נגרם ${damage.toFixed(1)} נזק, וספג ${counterDamage.toFixed(1)} נזק בתגובה`, currentWar.isCivilWar);
+                    
+                    let attackMsg = `⚔️ ${flag} ${displayName} תוקף את ${targetFlag} ${targetDisplayName}!`;
+                    if (allyBonus > 0) {
+                        attackMsg += ` (בתמיכת בעלי ברית +${allyBonus.toFixed(1)})`;
+                    }
+                    attackMsg += ` נגרם ${damage.toFixed(1)} נזק, וספג ${counterDamage.toFixed(1)} נזק בתגובה`;
+                    addLog(attackMsg, currentWar.isCivilWar);
                     break;
 
                 case 'defend':
@@ -1192,9 +1217,25 @@
                 const maxPower = countries[participant.country].power;
                 const percent = Math.max(0, (participant.strength / maxPower * 100));
                 
+                // Get allies info
+                let alliesInfo = '';
+                if (participant.allies.length > 0) {
+                    const allyNames = participant.allies
+                        .filter(allyKey => currentWar.participants[allyKey] && currentWar.participants[allyKey].isActive)
+                        .map(allyKey => {
+                            const ally = currentWar.participants[allyKey];
+                            const allyName = currentWar.isCivilWar ? allyKey : ally.country;
+                            const allyFlag = countries[ally.country].flag;
+                            return `${allyFlag}`;
+                        }).join(' ');
+                    if (allyNames) {
+                        alliesInfo = ` <span style="color: #10b981;">🤝 ${allyNames}</span>`;
+                    }
+                }
+                
                 html += `
                     <div style="margin: 10px 0;">
-                        <div>${flag} ${displayName}</div>
+                        <div>${flag} ${displayName}${alliesInfo}</div>
                         <div class="power-bar">
                             <div class="power-fill participant-${(index % 6) + 1}" style="width: ${percent}%">
                                 ${percent.toFixed(0)}%
@@ -1207,28 +1248,43 @@
             status.innerHTML = html;
         }
 
-        function checkWarEnd() {
+        function checkWarEnd(reason = 'victory') {
             if (!currentWar) return;
 
             if (currentWar.activeCount <= 1) {
                 const winner = Object.entries(currentWar.participants).find(([key, p]) => p.isActive);
                 if (winner) {
-                    endWar(winner[0]);
+                    endWar(winner[0], reason);
+                } else {
+                    // No one left - peace for all
+                    endWar(null, 'peace');
                 }
             }
         }
 
-        function endWar(winnerKey) {
-            const winner = currentWar.participants[winnerKey];
-            const displayName = currentWar.isCivilWar ? winnerKey : winner.country;
-            const flag = countries[winner.country].flag;
-            
-            if (currentWar.isCivilWar) {
-                addLog(`🏆 ${flag} ${displayName} ניצח במלחמת האזרחים לאחר ${warTurns} סיבובים!`, true);
-                alert(`🏆 ${displayName} ניצח במלחמת האזרחים!\n\nהמלחמה נמשכה ${warTurns} סיבובים`);
+        function endWar(winnerKey, reason = 'victory') {
+            if (reason === 'peace') {
+                addLog(`🕊️ המלחמה הסתיימה בשלום! כל הצדדים הסכימו להפסיק את הלחימה`, currentWar.isCivilWar);
+                if (winnerKey) {
+                    const winner = currentWar.participants[winnerKey];
+                    const displayName = currentWar.isCivilWar ? winnerKey : winner.country;
+                    const flag = countries[winner.country].flag;
+                    alert(`🕊️ המלחמה הסתיימה בשלום!\n\n${flag} ${displayName} נשאר בלבד לאחר ש${warTurns} סיבובים`);
+                } else {
+                    alert(`🕊️ המלחמה הסתיימה בשלום!\n\nהלחימה נמשכה ${warTurns} סיבובים`);
+                }
             } else {
-                addLog(`🏆 ${flag} ${displayName} ניצח במלחמה הרב-משתתפית לאחר ${warTurns} סיבובים!`);
-                alert(`🏆 ${displayName} ניצח במלחמה!\n\nהמלחמה נמשכה ${warTurns} סיבובים`);
+                const winner = currentWar.participants[winnerKey];
+                const displayName = currentWar.isCivilWar ? winnerKey : winner.country;
+                const flag = countries[winner.country].flag;
+                
+                if (currentWar.isCivilWar) {
+                    addLog(`🏆 ${flag} ${displayName} ניצח במלחמת האזרחים לאחר ${warTurns} סיבובים!`, true);
+                    alert(`🏆 ${displayName} ניצח במלחמת האזרחים!\n\nהמלחמה נמשכה ${warTurns} סיבובים`);
+                } else {
+                    addLog(`🏆 ${flag} ${displayName} ניצח במלחמה הרב-משתתפית לאחר ${warTurns} סיבובים!`);
+                    alert(`🏆 ${displayName} ניצח במלחמה!\n\nהמלחמה נמשכה ${warTurns} סיבובים`);
+                }
             }
             
             stopAutoBattle();
@@ -1237,6 +1293,65 @@
             updateRankings();
             updateStats();
             renderMap();
+        }
+
+        function proposeAllianceFor(participantKey) {
+            if (!currentWar || !currentWar.participants[participantKey] || !currentWar.participants[participantKey].isActive) {
+                alert('משתתף זה אינו פעיל במלחמה');
+                return;
+            }
+
+            const participant = currentWar.participants[participantKey];
+            const displayName = currentWar.isCivilWar ? participantKey : participant.country;
+            const flag = countries[participant.country].flag;
+
+            // Get all active opponents (not already allies)
+            const potentialAllies = Object.entries(currentWar.participants)
+                .filter(([key, p]) => 
+                    key !== participantKey && 
+                    p.isActive && 
+                    !participant.allies.includes(key)
+                );
+
+            if (potentialAllies.length === 0) {
+                alert('אין משתתפים זמינים לברית');
+                return;
+            }
+
+            // Ask which opponent to ally with
+            const allyKey = prompt(`${displayName} מציע ברית ל... (רשום את המספר):\n\n${
+                potentialAllies.map(([key, p], idx) => {
+                    const allyName = currentWar.isCivilWar ? key : p.country;
+                    const allyFlag = countries[p.country].flag;
+                    return `${idx + 1}. ${allyFlag} ${allyName}`;
+                }).join('\n')
+            }`);
+
+            if (!allyKey) return;
+
+            const index = parseInt(allyKey) - 1;
+            if (isNaN(index) || index < 0 || index >= potentialAllies.length) {
+                alert('בחירה לא חוקית');
+                return;
+            }
+
+            const [selectedKey, selectedParticipant] = potentialAllies[index];
+            const allyName = currentWar.isCivilWar ? selectedKey : selectedParticipant.country;
+            const allyFlag = countries[selectedParticipant.country].flag;
+
+            // 60% chance of alliance being accepted
+            if (Math.random() < 0.6) {
+                addLog(`🤝 ${flag} ${displayName} ו-${allyFlag} ${allyName} יצרו ברית! הם יעזרו זה לזה בקרבות`, currentWar.isCivilWar);
+                
+                // Create mutual alliance
+                participant.allies.push(selectedKey);
+                selectedParticipant.allies.push(participantKey);
+                
+                createWarControlButtons();
+                updateWarStatus();
+            } else {
+                addLog(`❌ ${allyFlag} ${allyName} דחה את הצעת הברית מ-${flag} ${displayName}`, currentWar.isCivilWar);
+            }
         }
 
         function proposePeaceFor(participantKey) {
@@ -1249,20 +1364,84 @@
             const displayName = currentWar.isCivilWar ? participantKey : participant.country;
             const flag = countries[participant.country].flag;
 
-            // 50% chance of peace offer being accepted
-            if (Math.random() < 0.5) {
-                addLog(`🕊️ ${flag} ${displayName} הציע שלום והצעה התקבלה! ${displayName} יוצא מהמלחמה`, currentWar.isCivilWar);
+            // Get all active opponents (non-allies)
+            const activeOpponents = Object.entries(currentWar.participants)
+                .filter(([key, p]) => 
+                    key !== participantKey && 
+                    p.isActive && 
+                    !participant.allies.includes(key)
+                );
+
+            if (activeOpponents.length === 0) {
+                alert('אין יריבים פעילים להציע להם שלום');
+                return;
+            }
+
+            // Ask which opponent to offer peace to
+            const opponentKey = prompt(`${displayName} מציע שלום ל... (רשום את המספר):\n\n${
+                activeOpponents.map(([key, p], idx) => {
+                    const opponentName = currentWar.isCivilWar ? key : p.country;
+                    const opponentFlag = countries[p.country].flag;
+                    return `${idx + 1}. ${opponentFlag} ${opponentName}`;
+                }).join('\n')
+            }`);
+
+            if (!opponentKey) return;
+
+            const index = parseInt(opponentKey) - 1;
+            if (isNaN(index) || index < 0 || index >= activeOpponents.length) {
+                alert('בחירה לא חוקית');
+                return;
+            }
+
+            const [selectedKey, selectedParticipant] = activeOpponents[index];
+            const opponentName = currentWar.isCivilWar ? selectedKey : selectedParticipant.country;
+            const opponentFlag = countries[selectedParticipant.country].flag;
+
+            // Check if there's already a peace offer from the opponent
+            if (!currentWar.peaceOffers[participantKey]) {
+                currentWar.peaceOffers[participantKey] = [];
+            }
+            if (!currentWar.peaceOffers[selectedKey]) {
+                currentWar.peaceOffers[selectedKey] = [];
+            }
+
+            // Check if opponent already offered peace to this participant
+            if (currentWar.peaceOffers[selectedKey].includes(participantKey)) {
+                // Mutual peace agreement!
+                addLog(`🕊️ ${flag} ${displayName} ו-${opponentFlag} ${opponentName} הגיעו להסכם שלום! שניהם יוצאים מהמלחמה`, currentWar.isCivilWar);
                 
-                // Remove this participant from the war
+                // Remove both participants from the war
                 participant.isActive = false;
-                currentWar.activeCount--;
+                selectedParticipant.isActive = false;
+                currentWar.activeCount -= 2;
+                
+                // Clear their peace offers
+                currentWar.peaceOffers[participantKey] = [];
+                currentWar.peaceOffers[selectedKey] = [];
                 
                 createWarControlButtons();
                 updateWarStatus();
                 renderMap();
-                checkWarEnd();
+                checkWarEnd('peace');
             } else {
-                addLog(`❌ ${flag} ${displayName} הציע שלום אך ההצעה נדחתה! הלחימה נמשכת`, currentWar.isCivilWar);
+                // 70% chance the opponent accepts the peace offer
+                if (Math.random() < 0.7) {
+                    addLog(`🕊️ ${opponentFlag} ${opponentName} מקבל את הצעת השלום מ-${flag} ${displayName}! שניהם יוצאים מהמלחמה`, currentWar.isCivilWar);
+                    
+                    // Remove both participants from the war
+                    participant.isActive = false;
+                    selectedParticipant.isActive = false;
+                    currentWar.activeCount -= 2;
+                    
+                    createWarControlButtons();
+                    updateWarStatus();
+                    renderMap();
+                    checkWarEnd('peace');
+                } else {
+                    // Offer declined
+                    addLog(`❌ ${opponentFlag} ${opponentName} דחה את הצעת השלום מ-${flag} ${displayName}`, currentWar.isCivilWar);
+                }
             }
         }
 
@@ -1281,15 +1460,7 @@
                 return;
             }
 
-            // Create select options for countries
-            let options = '<option value="">בחר מדינה להצעת שלום</option>';
-            activeParticipants.forEach(([key, p]) => {
-                const displayName = currentWar.isCivilWar ? key : p.country;
-                const flag = countries[p.country].flag;
-                options += `<option value="${key}">${flag} ${displayName}</option>`;
-            });
-
-            // Show dialog to select country
+            // Show dialog to select country that offers peace
             const countryKey = prompt(`בחר מדינה שתציע שלום (רשום את המספר):\n\n${
                 activeParticipants.map(([key, p], idx) => {
                     const displayName = currentWar.isCivilWar ? key : p.country;
@@ -1307,23 +1478,9 @@
             }
 
             const [selectedKey, selectedParticipant] = activeParticipants[index];
-            const displayName = currentWar.isCivilWar ? selectedKey : selectedParticipant.country;
-            const flag = countries[selectedParticipant.country].flag;
-
-            // 50% chance of peace offer being accepted
-            if (Math.random() < 0.5) {
-                addLog(`🕊️ ${flag} ${displayName} הציע שלום והצעה התקבלה! ${displayName} יוצא מהמלחמה`, currentWar.isCivilWar);
-                
-                // Remove this participant from the war
-                selectedParticipant.isActive = false;
-                currentWar.activeCount--;
-                
-                updateWarStatus();
-                renderMap();
-                checkWarEnd();
-            } else {
-                addLog(`❌ ${flag} ${displayName} הציע שלום אך ההצעה נדחתה! הלחימה נמשכת`, currentWar.isCivilWar);
-            }
+            
+            // Use the proposePeaceFor function
+            proposePeaceFor(selectedKey);
         }
 
         function surrenderFor(participantKey) {
