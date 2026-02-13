@@ -578,17 +578,7 @@
 
     <script>
         // נתוני מדינות עם דירוג כוח (1-100)
-        let countries = {};
-
-        let currentWar = null;
-        let attackLines = [];
-        let warTurns = 0;
-        let autoBattleInterval = null;
-        let totalTurnsAllWars = 0;
-        let participantCount = 2;
-
-        // Fallback countries data (used if JSON loading fails)
-        const fallbackCountries = {
+        const countries = {
             'ארה"ב': { power: 100, flag: '🇺🇸', x: 15, y: 35, color: '#1e40af' },
             'סין': { power: 95, flag: '🇨🇳', x: 75, y: 40, color: '#dc2626' },
             'רוסיה': { power: 90, flag: '🇷🇺', x: 60, y: 25, color: '#16a34a' },
@@ -615,22 +605,12 @@
             'פקיסטן': { power: 23, flag: '🇵🇰', x: 68, y: 45, color: '#16a34a' }
         };
 
-        // Load countries from JSON file
-        async function loadCountries() {
-            try {
-                const response = await fetch('./countries.json');
-                if (!response.ok) {
-                    throw new Error('Failed to load countries.json');
-                }
-                countries = await response.json();
-                console.log('Countries loaded from JSON successfully');
-                init();
-            } catch (error) {
-                console.warn('Could not load countries.json, using fallback data:', error);
-                countries = fallbackCountries;
-                init();
-            }
-        }
+        let currentWar = null;
+        let attackLines = [];
+        let warTurns = 0;
+        let autoBattleInterval = null;
+        let totalTurnsAllWars = 0;
+        let participantCount = 2;
 
         function init() {
             populateSelects();
@@ -1428,7 +1408,7 @@
         }
 
         // Initialize game
-        loadCountries();
+        init();
     </script>
 </body>
 </html>
