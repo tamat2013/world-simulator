@@ -1204,17 +1204,57 @@
                 return;
             }
 
+            // Create a list of active participants
+            const activeParticipants = Object.entries(currentWar.participants)
+                .filter(([key, p]) => p.isActive);
+            
+            if (activeParticipants.length === 0) {
+                alert('אין משתתפים פעילים במלחמה');
+                return;
+            }
+
+            // Create select options for countries
+            let options = '<option value="">בחר מדינה להצעת שלום</option>';
+            activeParticipants.forEach(([key, p]) => {
+                const displayName = currentWar.isCivilWar ? key : p.country;
+                const flag = countries[p.country].flag;
+                options += `<option value="${key}">${flag} ${displayName}</option>`;
+            });
+
+            // Show dialog to select country
+            const countryKey = prompt(`בחר מדינה שתציע שלום (רשום את המספר):\n\n${
+                activeParticipants.map(([key, p], idx) => {
+                    const displayName = currentWar.isCivilWar ? key : p.country;
+                    const flag = countries[p.country].flag;
+                    return `${idx + 1}. ${flag} ${displayName}`;
+                }).join('\n')
+            }`);
+
+            if (!countryKey) return;
+
+            const index = parseInt(countryKey) - 1;
+            if (isNaN(index) || index < 0 || index >= activeParticipants.length) {
+                alert('בחירה לא חוקית');
+                return;
+            }
+
+            const [selectedKey, selectedParticipant] = activeParticipants[index];
+            const displayName = currentWar.isCivilWar ? selectedKey : selectedParticipant.country;
+            const flag = countries[selectedParticipant.country].flag;
+
+            // 50% chance of peace offer being accepted
             if (Math.random() < 0.5) {
-                addLog(`🕊️ הצעת השלום התקבלה! כל המשתתפים מסכימים לשלום`, currentWar.isCivilWar);
-                alert('הצעת השלום התקבלה! המלחמה הסתיימה');
-                stopAutoBattle();
-                currentWar = null;
-                document.getElementById('warControls').style.display = 'none';
-                updateRankings();
-                updateStats();
+                addLog(`🕊️ ${flag} ${displayName} הציע שלום והצעה התקבלה! ${displayName} יוצא מהמלחמה`, currentWar.isCivilWar);
+                
+                // Remove this participant from the war
+                selectedParticipant.isActive = false;
+                currentWar.activeCount--;
+                
+                updateWarStatus();
                 renderMap();
+                checkWarEnd();
             } else {
-                addLog(`❌ הצעת השלום נדחתה! הלחימה נמשכת`, currentWar.isCivilWar);
+                addLog(`❌ ${flag} ${displayName} הציע שלום אך ההצעה נדחתה! הלחימה נמשכת`, currentWar.isCivilWar);
             }
         }
 
@@ -1224,22 +1264,46 @@
                 return;
             }
 
-            if (confirm('האם אתה בטוח שאתה רוצה להכריז על כניעה כללית?')) {
-                const activeParticipants = Object.entries(currentWar.participants)
-                    .filter(([key, p]) => p.isActive);
+            // Create a list of active participants
+            const activeParticipants = Object.entries(currentWar.participants)
+                .filter(([key, p]) => p.isActive);
+            
+            if (activeParticipants.length === 0) {
+                alert('אין משתתפים פעילים במלחמה');
+                return;
+            }
+
+            // Show dialog to select country
+            const countryKey = prompt(`בחר מדינה שתכריז על כניעה (רשום את המספר):\n\n${
+                activeParticipants.map(([key, p], idx) => {
+                    const displayName = currentWar.isCivilWar ? key : p.country;
+                    const flag = countries[p.country].flag;
+                    return `${idx + 1}. ${flag} ${displayName}`;
+                }).join('\n')
+            }`);
+
+            if (!countryKey) return;
+
+            const index = parseInt(countryKey) - 1;
+            if (isNaN(index) || index < 0 || index >= activeParticipants.length) {
+                alert('בחירה לא חוקית');
+                return;
+            }
+
+            const [selectedKey, selectedParticipant] = activeParticipants[index];
+            const displayName = currentWar.isCivilWar ? selectedKey : selectedParticipant.country;
+            const flag = countries[selectedParticipant.country].flag;
+
+            if (confirm(`האם אתה בטוח ש-${displayName} יכריז על כניעה?`)) {
+                addLog(`🏳️ ${flag} ${displayName} הכריז על כניעה ויוצא מהמלחמה!`, currentWar.isCivilWar);
                 
-                if (activeParticipants.length > 0) {
-                    const winner = activeParticipants[0];
-                    const displayName = currentWar.isCivilWar ? winner[0] : winner[1].country;
-                    addLog(`🏳️ כניעה כללית! ${displayName} מנצח!`, currentWar.isCivilWar);
-                }
+                // Remove this participant from the war
+                selectedParticipant.isActive = false;
+                currentWar.activeCount--;
                 
-                stopAutoBattle();
-                currentWar = null;
-                document.getElementById('warControls').style.display = 'none';
-                updateRankings();
-                updateStats();
+                updateWarStatus();
                 renderMap();
+                checkWarEnd();
             }
         }
 
