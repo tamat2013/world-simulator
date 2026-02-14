@@ -23,7 +23,9 @@ const COUNTRIES = {
     'ארגנטינה': { power: 30, flag: '🇦🇷', x: 28, y: 78, color: '#0891b2' },
     'דרום אפריקה': { power: 28, flag: '🇿🇦', x: 52, y: 75, color: '#eab308' },
     'אינדונזיה': { power: 25, flag: '🇮🇩', x: 78, y: 62, color: '#dc2626' },
-    'פקיסטן': { power: 23, flag: '🇵🇰', x: 68, y: 45, color: '#16a34a' }
+    'פקיסטן': { power: 23, flag: '🇵🇰', x: 68, y: 45, color: '#16a34a' },
+    'ניגריה': { power: 20, flag: '🇳🇬', x: 50, y: 60, color: '#15803d' },
+    'וונצואלה': { power: 18, flag: '🇻🇪', x: 25, y: 55, color: '#0891b2' }
 };
 
 // קבועים
